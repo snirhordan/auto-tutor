@@ -1,0 +1,14 @@
+Student: Dana
+Tutor: We need to talk about the mock exam from Sunday. Walk me through question 3, the vectors one.
+Dana: I skipped it. I looked at the plane equation part and blanked.
+Tutor: OK, and the complex numbers question?
+Dana: I did the first part, converting to polar — I got modulus 2 and angle 45. The de Moivre part I started but I multiplied the angles wrong, I did 45+8 instead of 45·8.
+Tutor: And the trig function investigation?
+Dana: That one went better! I found the derivative of sin(2x) as 2cos(2x), found the critical points in the domain, and I only lost points because I forgot to check the endpoints.
+Tutor: That's actually solid. Let's look at the 3D trig question.
+Dana: I drew the pyramid but I couldn't find the right triangle to work in. I never know which plane to cut.
+Tutor: Let's try the analytic geometry — the ellipse question.
+Dana: I remembered b² = a² - c²... or is it plus? I wrote the equation with the wrong denominator and everything after that collapsed.
+Tutor: So here's where we are: the exam is in less than three weeks, we have maybe five sessions. Vectors, complex de Moivre, 3D trig, and ellipse all need serious work, and calculus-2 is nearly there.
+Dana: Can we even cover all of that?
+Tutor: That's exactly what I need to figure out before Thursday.

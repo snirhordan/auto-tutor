@@ -1,0 +1,18 @@
+Student: Itai
+Tutor: Let's open with the three warm-up questions I prepared.
+Tutor: First: compute u·v for u=(2,-3), v=(-1,4) — write each product term separately before summing.
+Itai: (2)(-1) = -2, and (-3)(4) = -12. So -2 + (-12) = -14.
+Tutor: Clean. Second: what is the sign of cos(140°)? No computing.
+Itai: Um... 140 is in the second quadrant... sine is positive there... so cosine is... positive?
+Tutor: Think about the unit circle — where is x at 140 degrees?
+Itai: Oh. x is negative on the left side. So cosine is negative. I said it backwards again.
+Tutor: Third: if u·v = -5, |u|=3, |v|=5, is the angle acute or obtuse?
+Itai: cos θ = -5/15 which is negative so... obtuse. That one I get.
+Tutor: So notice what happened: the dot-product arithmetic was perfect today, but the quadrant question caught you again, cold.
+Itai: Yeah. When it's inside a vectors problem I can sometimes feel my way, but alone like that I genuinely don't know it.
+Tutor: Let's rebuild it from the unit circle then. [15 minutes of unit-circle work]
+Tutor: Now try: in which quadrants is tan positive?
+Itai: First... and third? Because sine and cosine have the same sign there.
+Tutor: Correct. And sign of cos(200°)?
+Itai: Third quadrant, x negative — negative.
+Tutor: Good. That's real progress, but this was supposed to be a vectors-and-planes session and we spent it on 10th-grade trig. We're not going to finish planes before your exam at this rate unless we add a session.

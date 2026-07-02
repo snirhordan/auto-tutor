@@ -1,0 +1,62 @@
+{
+  "comment": "Synthesized demo students. mastery_default seeds every concept; overrides express each student's story. Shared exam date = summer 582 sitting.",
+  "students": [
+    {
+      "id": "stu-itai-h11",
+      "name": "Itai",
+      "track": "5u",
+      "exam_date": "2026-07-22",
+      "target_grade": 92,
+      "story": "Strong in calculus, shaky on vectors — with a hidden trig-foundation gap the sessions will expose.",
+      "mastery_default": 0.75,
+      "overrides": {
+        "5u.geo3d.vectors-basic": { "mastery": 0.6 },
+        "5u.geo3d.vectors-dot": { "mastery": 0.45, "error_patterns": ["sign-flip"] },
+        "5u.geo3d.lines-3d": { "mastery": 0.5 },
+        "5u.geo3d.planes": { "mastery": 0.4 },
+        "5u.geo3d.distance": { "mastery": 0.35 },
+        "5u.trig.ratios": { "mastery": 0.55, "error_patterns": ["quadrant-confusion"] },
+        "5u.trig.unit-circle": { "mastery": 0.5 },
+        "5u.calc1.function-investigation": { "mastery": 0.85 },
+        "5u.calc1.optimization": { "mastery": 0.8 }
+      }
+    },
+    {
+      "id": "stu-noa-h12",
+      "name": "Noa",
+      "track": "5u",
+      "exam_date": "2026-07-22",
+      "target_grade": 95,
+      "story": "Consistently strong; sessions mostly confirm mastery and advance the roadmap.",
+      "mastery_default": 0.85,
+      "overrides": {
+        "5u.complex.polar": { "mastery": 0.7 },
+        "5u.calc2.investigation": { "mastery": 0.75 }
+      }
+    },
+    {
+      "id": "stu-dana-h11",
+      "name": "Dana",
+      "track": "5u",
+      "exam_date": "2026-07-22",
+      "target_grade": 75,
+      "story": "Far behind with weeks to the exam — forces calendar triage: which topics to drop, which to double down on.",
+      "mastery_default": 0.55,
+      "overrides": {
+        "5u.geo3d.vectors-basic": { "mastery": 0.35 },
+        "5u.geo3d.vectors-dot": { "mastery": 0.3 },
+        "5u.geo3d.lines-3d": { "mastery": 0.25 },
+        "5u.geo3d.planes": { "mastery": 0.2 },
+        "5u.geo3d.distance": { "mastery": 0.2 },
+        "5u.complex.arithmetic": { "mastery": 0.4 },
+        "5u.complex.polar": { "mastery": 0.25 },
+        "5u.calc2.trig-derivatives": { "mastery": 0.45 },
+        "5u.calc2.investigation": { "mastery": 0.35 },
+        "5u.calc2.integrals": { "mastery": 0.3 },
+        "5u.trig3d.solids": { "mastery": 0.3 },
+        "5u.analytic.ellipse": { "mastery": 0.4 },
+        "5u.trig.ratios": { "mastery": 0.6 }
+      }
+    }
+  ]
+}

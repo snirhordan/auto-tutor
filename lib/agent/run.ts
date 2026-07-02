@@ -1,0 +1,157 @@
+// AutoTutor entry point: prompt in → {response, steps[]} out.
+// Flow: IntentRouter → SupervisorAgent (dispatches specialists) → code assembly
+// → ReflectionAgent quality gate. Every LLM call and deterministic module is traced.
+import { randomUUID } from "crypto";
+import { MAX_LLM_CALLS_PER_RUN } from "../config";
+import type { RunArtifacts, Step } from "./types";
+import { Trace } from "./types";
+import { detectLanguage, routeIntent } from "./intentRouter";
+import { runSupervisor } from "./supervisor";
+import { runReflectionAgent } from "./subagents/reflectionAgent";
+import { findStudent, listStudents, loadConcepts, loadEdges, loadMastery, saveSession } from "./state";
+
+export interface ExecuteResult {
+  response: string;
+  steps: Step[];
+}
+
+export async function executeAgent(prompt: string): Promise<ExecuteResult> {
+  const trace = new Trace(randomUUID(), MAX_LLM_CALLS_PER_RUN);
+  const now = new Date();
+  const language = detectLanguage(prompt);
+  const artifacts: RunArtifacts = { language };
+
+  // 1) Route the event.
+  const routed = await routeIntent(trace, prompt);
+
+  if (routed.intent === "out_of_scope") {
+    const refusal =
+      language === "he"
+        ? `זה מחוץ לתחום שלי. אני סוכן אוטונומי למורים פרטיים למתמטיקה (5 יח"ל): הדביקו תמליל שיעור ואטפל בכל השאר — אבחון, עדכון שליטה, תחזית ותכנון השיעור הבא; או שאלו אותי על תלמיד קיים. (${routed.reason})`
+        : `That's outside my scope. I'm an autonomous agent for bagrut math tutors: paste a session transcript and I'll handle everything else — diagnosis, mastery updates, forecast, and next-lesson planning; or ask me about an existing student. (Classified as out of scope: ${routed.reason})`;
+    trace.addCode("ResponseComposer", "assemble refusal", { refused: true });
+    return { response: refusal, steps: trace.steps };
+  }
+
+  // 2) Resolve the student (code, not LLM).
+  const student = routed.student_ref ? await findStudent(routed.student_ref) : null;
+  if (!student) {
+    const known = (await listStudents()).map((s) => `${s.name} (${s.id})`).join(", ");
+    const ask =
+      routed.intent === "transcript"
+        ? `I couldn't match this transcript to a student${routed.student_ref ? ` ("${routed.student_ref}")` : ""}. Whose session is this? Known students: ${known}. Add "Student: <name>" at the top of the transcript.`
+        : `Which student do you mean${routed.student_ref ? ` by "${routed.student_ref}"` : ""}? Known students: ${known}.`;
+    trace.addCode("ResponseComposer", "assemble clarification (unknown student)", {
+      clarification: true,
+    });
+    return { response: ask, steps: trace.steps };
+  }
+
+  // 3) Load state and hand the event to the Supervisor.
+  const [masteryRows, concepts, edges] = await Promise.all([
+    loadMastery(student.id),
+    loadConcepts(),
+    loadEdges(),
+  ]);
+  artifacts.student = student;
+
+  await runSupervisor(
+    trace,
+    routed.intent,
+    {
+      student,
+      masteryRows,
+      concepts,
+      edges,
+      transcript: routed.intent === "transcript" ? prompt : undefined,
+      question: routed.intent === "question" ? prompt : undefined,
+      now,
+    },
+    artifacts,
+  );
+
+  // Question-Refinement path: the agent asks instead of guessing.
+  if (artifacts.clarification) {
+    trace.addCode("ResponseComposer", "assemble clarification (incomplete transcript)", {
+      clarification: true,
+    });
+    return { response: artifacts.clarification, steps: trace.steps };
+  }
+
+  // 4) Persist the session (transcript events).
+  if (routed.intent === "transcript" && artifacts.analysis) {
+    await saveSession(student.id, prompt, artifacts.analysis.session_summary, artifacts.analysis.evidence);
+  }
+
+  // 5) Assemble the response (code) and run the Reflection quality gate (LLM).
+  const draft = compose(artifacts);
+  trace.addCode("ResponseComposer", "assemble final response from artifacts", {
+    sections: Object.keys(artifacts).filter((k) => artifacts[k as keyof RunArtifacts] != null),
+  });
+  const final = await runReflectionAgent(trace, draft, contextSummary(artifacts));
+  return { response: final, steps: trace.steps };
+}
+
+// ---------- response assembly (deterministic) ----------
+
+function compose(a: RunArtifacts): string {
+  if (a.queryAnswer) return a.queryAnswer;
+  const s: string[] = [];
+  const he = a.language === "he";
+
+  if (a.analysis) {
+    s.push(`## ${he ? "סיכום המפגש" : "Session summary"}\n${a.analysis.session_summary}`);
+  }
+  if (a.masteryChanges?.length) {
+    s.push(
+      `## ${he ? "עדכוני שליטה" : "Mastery updates"}\n` +
+        a.masteryChanges.map((c) => `- \`${c.concept_id}\`: ${c.from} → **${c.to}**`).join("\n"),
+    );
+  }
+  if (a.diagnosis?.statement) {
+    let d = `## ${he ? "אבחון" : "Diagnosis"}\n${a.diagnosis.statement}`;
+    if (a.diagnosis.root_causes.length) {
+      d += `\n\n${he ? "גורמי שורש" : "Root causes"}: ` +
+        a.diagnosis.root_causes.map((r) => `\`${r.concept_id}\` (via \`${r.via}\`, score ${r.score})`).join(", ");
+    }
+    s.push(d);
+  }
+  if (a.probes?.length) {
+    s.push(
+      `## ${he ? "שאלות אבחון לפתיחת המפגש הבא" : "Diagnostic probes for next session"}\n` +
+        a.probes.map((p, i) => `${i + 1}. ${p.question}\n   - ${he ? "תשובה צפויה" : "expect"}: ${p.expected_answer}\n   - ${he ? "מבחין" : "distinguishes"}: ${p.distinguishes}`).join("\n"),
+    );
+  }
+  if (a.pace && a.forecast) {
+    let f =
+      `## ${he ? "קצב ותחזית" : "Pace & forecast"}\n` +
+      `- ${he ? "ימים לבחינה" : "Days to exam"}: **${a.pace.days_to_exam}** (~${a.pace.sessions_left} ${he ? "מפגשים" : "sessions"})\n` +
+      `- ${he ? "שליטה משוקללת" : "Weighted mastery"}: **${a.pace.weighted_mastery}** vs ${he ? "צפוי" : "expected"} ${a.pace.expected_mastery_by_now} → ${a.pace.on_track ? (he ? "בקצב" : "on track") : (he ? "**בפיגור**" : "**behind**")}\n` +
+      `- ${he ? "תחזית ציון" : "Grade forecast"}: **${a.forecast.predicted_grade}** [${a.forecast.interval_low}–${a.forecast.interval_high}] · ${he ? "שיעורים נדרשים ליעד" : "lessons needed to target"}: **${a.forecast.lessons_needed}**`;
+    if (a.audit) {
+      f += `\n- ${he ? "ביקורת עצמית על התחזית הקודמת" : "Self-audit of prior forecast"} (**${a.audit.verdict}**): ${a.audit.critique}\n- ${he ? "התאמה" : "Adjustment"}: ${a.audit.adjustment}`;
+    }
+    s.push(f);
+  }
+  if (a.roadmap?.length) {
+    let r =
+      `## ${he ? 'מפת דרך' : "Roadmap"}\n` +
+      a.roadmap.map((l) => `${l.lesson}. [${l.focus_concepts.map((c) => `\`${c}\``).join(", ")}] — ${l.goal}`).join("\n");
+    if (a.replanRationale) r += `\n\n> ${he ? "שינוי תכנית" : "Replan/triage"}: ${a.replanRationale}`;
+    s.push(r);
+  }
+  if (a.brief) {
+    s.push(`## ${he ? "תדריך למפגש הבא" : "Next-session brief"}\n${a.brief}`);
+  }
+  return s.join("\n\n") || (he ? "לא נדרשה פעולה." : "No action was required for this event.");
+}
+
+function contextSummary(a: RunArtifacts): string {
+  return (
+    `student: ${a.student?.name}, target ${a.student?.target_grade}, exam ${a.student?.exam_date}; ` +
+    `weak: ${a.diagnosis?.weak_concepts.map((w) => w.concept_id).join(", ") || "n/a"}; ` +
+    `root causes: ${a.diagnosis?.root_causes.map((r) => r.concept_id).join(", ") || "n/a"}; ` +
+    `forecast ${a.forecast?.predicted_grade ?? "n/a"}, on_track=${a.pace?.on_track ?? "n/a"}, ` +
+    `sessions_left=${a.pace?.sessions_left ?? "n/a"}`
+  );
+}

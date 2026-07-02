@@ -1,0 +1,13 @@
+Student: Noa
+Tutor: Complex numbers today. Write z = 1 + i√3 in polar form.
+Noa: |z| = √(1+3) = 2, argument is arctan(√3/1) = 60°, so z = 2(cos60° + i·sin60°).
+Tutor: Now z⁵.
+Noa: De Moivre — 2⁵ = 32, angle 300°. So 32(cos300° + i·sin300°) = 32(1/2 - i·√3/2) = 16 - 16i√3.
+Tutor: Perfect. Find all solutions of w³ = 8i.
+Noa: 8i has modulus 8 and argument 90°. Cube roots: modulus 2, arguments 30°, 150°, 270°. So w = 2cis30° = √3 + i, then -√3 + i, and -2i.
+Tutor: All three, no hesitation. Let's connect it to the exam format — 2023 winter had roots-of-unity with a geometry twist: show the three roots form an equilateral triangle.
+Noa: The three roots have the same modulus, angles 120° apart — so they're on a circle of radius 2 spaced equally. Distance between adjacent ones is 2·2·sin(60°) = 2√3, same for all pairs.
+Tutor: Excellent. Anything from the homework?
+Noa: Question 4 took me a while — the one where you had to find when zⁿ is real — but I got it: argument times n has to be a multiple of 180°.
+Tutor: Right. Honestly you're ahead of schedule on complex numbers. Next session I want to start the calculus of trig functions — investigation with periodicity.
+Noa: Sounds good.

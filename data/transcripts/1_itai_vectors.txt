@@ -1,0 +1,16 @@
+Student: Itai
+Tutor: Today let's work on vectors — start with the angle between u=(1,-2,2) and v=(3,0,-4).
+Itai: u·v = 3 + 0 + 8 = 11.
+Tutor: Check the last term again.
+Itai: Oh — 2·(-4) is -8, so it's 3 + 0 - 8 = -5. Then cos θ = -5/(|u||v|) = -5/15 = -1/3, so θ ≈ 109°.
+Tutor: Good recovery. Why is the cosine negative here — what does that tell you?
+Itai: Because the angle is more than 90? Honestly I always mix up in which quadrants cosine is negative.
+Tutor: We'll come back to that. Compute |u| for me.
+Itai: √(1+4+4) = 3. Easy.
+Tutor: Now a harder one — find a vector perpendicular to both u and w=(0,1,1).
+Itai: Perpendicular to both... so the dot product with each is zero. I set (x,y,z)·(1,-2,2)=0 and (x,y,z)·(0,1,1)=0... x - 2y + 2z = 0 and y + z = 0. So y = -z, then x = -2z - 2z... wait, x - 2(-z) + 2z = 0 so x + 4z = 0, x = -4z. So (-4, -1, 1) for z=1.
+Tutor: Check the sign on the middle step once more.
+Itai: x - 2y + 2z with y=-z gives x + 2z + 2z = x + 4z = 0. Yes, (-4,-1,1).
+Tutor: Right. Last one — in the pyramid we did last week, the angle between the lateral edge and the base. Set it up.
+Itai: I drop the height to the center... then the angle is between the edge and its projection. tan of the angle = height over the projection length. I remember the setup but I got confused last time about whether it's sine or tangent when I have the edge length.
+Tutor: We're out of time — practice the quadrant signs for next time, it's costing you marks on every vectors question.

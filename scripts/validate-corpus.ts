@@ -1,0 +1,66 @@
+// Validate the ingested Ministry corpus against the hand-curated 5u concept graph:
+// every curated concept must retrieve at least one syllabus chunk and (non-foundation)
+// one exam chunk above a similarity floor. Gaps are reported — the agent falls back to
+// curated concept descriptions for uncovered concepts, so a gap degrades, never breaks.
+//
+// Usage: npx tsx scripts/validate-corpus.ts
+import "dotenv/config";
+import fs from "fs";
+import path from "path";
+import { embed } from "../lib/llm";
+import { queryNamespace } from "../lib/pinecone";
+import { NS_EXAMS, NS_SYLLABUS } from "../lib/config";
+
+const SCORE_FLOOR = 0.3;
+
+interface Concept {
+  id: string;
+  sheelon: string;
+  name_en: string;
+  name_he: string;
+  description: string;
+}
+
+async function main() {
+  const root = path.join(__dirname, "..");
+  const graph = JSON.parse(fs.readFileSync(path.join(root, "data/concepts_5u.json"), "utf8"));
+  const concepts: Concept[] = graph.concepts;
+
+  const queries = concepts.map((c) => `${c.name_he} — ${c.name_en}. ${c.description}`);
+  const vectors = await embed(queries, "validate-corpus");
+
+  const rows: { id: string; syl: number; exam: number; ok: boolean }[] = [];
+  for (let i = 0; i < concepts.length; i++) {
+    const c = concepts[i];
+    const syl = await queryNamespace(NS_SYLLABUS, vectors[i], 3);
+    const exam = await queryNamespace(NS_EXAMS, vectors[i], 3);
+    const sylTop = syl[0]?.score ?? 0;
+    const examTop = exam[0]?.score ?? 0;
+    const needsExam = c.sheelon !== "foundation";
+    const ok = sylTop >= SCORE_FLOOR && (!needsExam || examTop >= SCORE_FLOOR);
+    rows.push({ id: c.id, syl: sylTop, exam: examTop, ok });
+  }
+
+  const covered = rows.filter((r) => r.ok).length;
+  console.log(`coverage: ${covered}/${rows.length} concepts above floor ${SCORE_FLOOR}`);
+  console.log("\nid".padEnd(36) + "syllabus  exam   ok");
+  for (const r of rows) {
+    console.log(
+      r.id.padEnd(36) + r.syl.toFixed(3) + "     " + r.exam.toFixed(3) + "  " + (r.ok ? "✓" : "GAP"),
+    );
+  }
+  const gaps = rows.filter((r) => !r.ok);
+  if (gaps.length) {
+    console.log(`\n${gaps.length} gaps — agent will fall back to curated descriptions for these.`);
+  }
+  fs.writeFileSync(
+    path.join(root, "data/ministry/coverage-report.json"),
+    JSON.stringify(rows, null, 2),
+  );
+  console.log("report -> data/ministry/coverage-report.json");
+}
+
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

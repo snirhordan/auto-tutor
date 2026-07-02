@@ -1,0 +1,10 @@
+{
+  "captured_from_real_runs": false,
+  "prompt_examples": [
+    {
+      "prompt": "Student: Itai\nTutor: Let's compute the angle between u=(1,-2,2) and v=(3,0,-4).\nItai: u·v = 3 + 0 + 8 = 11.\nTutor: Check the last term again.\nItai: Oh — 2·(-4) is -8, so it's 3 - 8 = -5. Then cos θ = -5/(3·5) = -1/3, θ ≈ 109°.\nTutor: Good. Why is cos negative here?\nItai: Because... the angle is more than 90? I always mix up which quadrants cosine is negative in.\nTutor: We'll come back to that. Try |u|.\nItai: √(1+4+4) = 3, easy.",
+      "full_response": "(placeholder — run `npx tsx scripts/capture-examples.ts` after seeding to record a real run, including its full steps[])",
+      "steps": []
+    }
+  ]
+}

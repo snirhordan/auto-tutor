@@ -1,0 +1,272 @@
+[
+  {
+    "file": "exam_35581_2021_s1",
+    "kind": "exam",
+    "year": 2021,
+    "season": 1,
+    "code": 35581,
+    "pages": 6,
+    "scanned_pages": 0,
+    "chars": 6873
+  },
+  {
+    "file": "exam_35582_2021_s1",
+    "kind": "exam",
+    "year": 2021,
+    "season": 1,
+    "code": 35582,
+    "pages": 4,
+    "scanned_pages": 0,
+    "chars": 5293
+  },
+  {
+    "file": "exam_35581_2021_s8",
+    "kind": "exam",
+    "year": 2021,
+    "season": 8,
+    "code": 35581,
+    "pages": 7,
+    "scanned_pages": 0,
+    "chars": 8096
+  },
+  {
+    "file": "exam_35582_2021_s8",
+    "kind": "exam",
+    "year": 2021,
+    "season": 8,
+    "code": 35582,
+    "pages": 5,
+    "scanned_pages": 0,
+    "chars": 5677
+  },
+  {
+    "file": "exam_35581_2022_s1",
+    "kind": "exam",
+    "year": 2022,
+    "season": 1,
+    "code": 35581,
+    "pages": 6,
+    "scanned_pages": 0,
+    "chars": 7868
+  },
+  {
+    "file": "exam_35582_2022_s1",
+    "kind": "exam",
+    "year": 2022,
+    "season": 1,
+    "code": 35582,
+    "pages": 5,
+    "scanned_pages": 0,
+    "chars": 5672
+  },
+  {
+    "file": "exam_35581_2022_s8",
+    "kind": "exam",
+    "year": 2022,
+    "season": 8,
+    "code": 35581,
+    "pages": 6,
+    "scanned_pages": 0,
+    "chars": 8133
+  },
+  {
+    "file": "exam_35582_2022_s8",
+    "kind": "exam",
+    "year": 2022,
+    "season": 8,
+    "code": 35582,
+    "pages": 6,
+    "scanned_pages": 0,
+    "chars": 6247
+  },
+  {
+    "file": "exam_35581_2023_s1",
+    "kind": "exam",
+    "year": 2023,
+    "season": 1,
+    "code": 35581,
+    "pages": 6,
+    "scanned_pages": 0,
+    "chars": 8335
+  },
+  {
+    "file": "exam_35582_2023_s1",
+    "kind": "exam",
+    "year": 2023,
+    "season": 1,
+    "code": 35582,
+    "pages": 5,
+    "scanned_pages": 0,
+    "chars": 6123
+  },
+  {
+    "file": "exam_35581_2023_s8",
+    "kind": "exam",
+    "year": 2023,
+    "season": 8,
+    "code": 35581,
+    "pages": 6,
+    "scanned_pages": 0,
+    "chars": 8023
+  },
+  {
+    "file": "exam_35582_2023_s8",
+    "kind": "exam",
+    "year": 2023,
+    "season": 8,
+    "code": 35582,
+    "pages": 4,
+    "scanned_pages": 0,
+    "chars": 5474
+  },
+  {
+    "file": "exam_35581_2024_s1",
+    "kind": "exam",
+    "year": 2024,
+    "season": 1,
+    "code": 35581,
+    "pages": 6,
+    "scanned_pages": 0,
+    "chars": 7666
+  },
+  {
+    "file": "exam_35582_2024_s1",
+    "kind": "exam",
+    "year": 2024,
+    "season": 1,
+    "code": 35582,
+    "pages": 5,
+    "scanned_pages": 0,
+    "chars": 5465
+  },
+  {
+    "file": "exam_35581_2024_s8",
+    "kind": "exam",
+    "year": 2024,
+    "season": 8,
+    "code": 35581,
+    "pages": 6,
+    "scanned_pages": 0,
+    "chars": 8557
+  },
+  {
+    "file": "exam_35582_2024_s8",
+    "kind": "exam",
+    "year": 2024,
+    "season": 8,
+    "code": 35582,
+    "pages": 5,
+    "scanned_pages": 0,
+    "chars": 5983
+  },
+  {
+    "file": "exam_35581_2025_s1",
+    "kind": "exam",
+    "year": 2025,
+    "season": 1,
+    "code": 35581,
+    "pages": 6,
+    "scanned_pages": 0,
+    "chars": 8089
+  },
+  {
+    "file": "exam_35582_2025_s1",
+    "kind": "exam",
+    "year": 2025,
+    "season": 1,
+    "code": 35582,
+    "pages": 5,
+    "scanned_pages": 0,
+    "chars": 5920
+  },
+  {
+    "file": "exam_35581_2025_s8",
+    "kind": "exam",
+    "year": 2025,
+    "season": 8,
+    "code": 35581,
+    "pages": 6,
+    "scanned_pages": 0,
+    "chars": 7397
+  },
+  {
+    "file": "exam_35582_2025_s8",
+    "kind": "exam",
+    "year": 2025,
+    "season": 8,
+    "code": 35582,
+    "pages": 5,
+    "scanned_pages": 0,
+    "chars": 6430
+  },
+  {
+    "file": "syl_yod5",
+    "kind": "syllabus",
+    "pages": 44,
+    "scanned_pages": 0,
+    "chars": 75309
+  },
+  {
+    "file": "syl_yodalef5",
+    "kind": "syllabus",
+    "pages": 87,
+    "scanned_pages": 1,
+    "chars": 118084
+  },
+  {
+    "file": "syl_yodbet5",
+    "kind": "syllabus",
+    "pages": 50,
+    "scanned_pages": 1,
+    "chars": 62923
+  },
+  {
+    "file": "syl_newcurriculum",
+    "kind": "syllabus",
+    "pages": 30,
+    "scanned_pages": 10,
+    "chars": 6261
+  },
+  {
+    "file": "syl_Teaching-Recommendations-5units-tashpav",
+    "kind": "syllabus",
+    "pages": 7,
+    "scanned_pages": 0,
+    "chars": 7863
+  },
+  {
+    "file": "syl_subjects-tashpav",
+    "kind": "syllabus",
+    "pages": 6,
+    "scanned_pages": 0,
+    "chars": 4916
+  },
+  {
+    "file": "syl_strucure-points-time-tashpav",
+    "kind": "syllabus",
+    "pages": 2,
+    "scanned_pages": 0,
+    "chars": 1754
+  },
+  {
+    "file": "syl_prisa5tashpah",
+    "kind": "syllabus",
+    "pages": 5,
+    "scanned_pages": 0,
+    "chars": 5354
+  },
+  {
+    "file": "syl_5-MATH-Formula_NEW",
+    "kind": "syllabus",
+    "pages": 4,
+    "scanned_pages": 0,
+    "chars": 6374
+  },
+  {
+    "file": "syl_vector-subject",
+    "kind": "syllabus",
+    "pages": 5,
+    "scanned_pages": 0,
+    "chars": 5052
+  }
+]
