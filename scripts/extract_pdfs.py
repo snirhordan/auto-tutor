@@ -69,11 +69,32 @@ def download(url: str, dest: str) -> bool:
         return False
 
 
+def rtl_page_text(page) -> str:
+    """RTL-aware text reconstruction.
+
+    PyMuPDF returns Hebrew in VISUAL order (word-scrambled lines). Rebuild lines
+    from word boxes: group words by (block, line), order lines top-to-bottom,
+    and order words right-to-left within each line. Math formulas typeset as
+    positioned glyphs remain fragmentary — scripts/parse-exams.ts (ExamParser,
+    LLM strict-JSON) reconstructs those; this stage fixes the prose.
+    """
+    words = page.get_text("words")  # (x0, y0, x1, y1, word, block, line, wordno)
+    lines: dict = {}
+    for w in words:
+        lines.setdefault((w[5], w[6]), []).append(w)
+    ordered = sorted(lines.values(), key=lambda ws: (ws[0][5], min(w[1] for w in ws)))
+    out = []
+    for ws in ordered:
+        ws = sorted(ws, key=lambda w: -w[0])  # right-to-left
+        out.append(" ".join(w[4] for w in ws))
+    return "\n".join(out).strip()
+
+
 def extract(pdf_path: str, out_path: str) -> dict:
     doc = fitz.open(pdf_path)
     parts, scanned = [], 0
     for i, page in enumerate(doc):
-        text = page.get_text().strip()
+        text = rtl_page_text(page)
         if len(text) < 30:  # likely a scanned page
             scanned += 1
             continue

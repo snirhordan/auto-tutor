@@ -62,7 +62,10 @@ npm install
 cp .env.example .env        # fill in LLMod / Supabase / Pinecone keys
 # 1. apply supabase/schema.sql in the Supabase SQL editor
 npm run seed                # concept graph + demo students + baseline mastery
-python3 scripts/extract_pdfs.py   # download+extract Ministry syllabus & exams (PyMuPDF)
+python3 scripts/extract_pdfs.py   # download + RTL-aware extraction of Ministry syllabus & exams
+npm run parse-exams -- --limit 1  # ExamParser [LLM · strict JSON, Toby pattern]: verify one exam,
+npm run parse-exams               #   then all 20 — reconstructs shattered formulas as LaTeX,
+                                  #   tags questions with concept ids (offline, ~$0.15 total)
 npm run ingest -- --limit 3 # subset smoke test
 npm run ingest              # full corpus → Pinecone
 npm run validate-corpus     # coverage report: curated graph vs ingested corpus

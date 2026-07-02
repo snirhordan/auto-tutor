@@ -13,7 +13,8 @@
     "ingest": "tsx scripts/ingest.ts",
     "validate-corpus": "tsx scripts/validate-corpus.ts",
     "capture-examples": "tsx scripts/capture-examples.ts",
-    "budget": "tsx scripts/budget-report.ts"
+    "budget": "tsx scripts/budget-report.ts",
+    "parse-exams": "tsx scripts/parse-exams.ts"
   },
   "dependencies": {
     "@pinecone-database/pinecone": "^8.0.0",

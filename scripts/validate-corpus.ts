@@ -21,10 +21,39 @@ interface Concept {
   description: string;
 }
 
+/** Direct-tag report from ExamParser output: how many real exam questions carry
+ *  each concept id — a data-driven sanity check of the curated exam-topic weights. */
+function taggedQuestionReport(root: string, concepts: Concept[]): void {
+  const dir = path.join(root, "data/ministry/parsed");
+  if (!fs.existsSync(dir)) {
+    console.log("(no parsed exams yet — run scripts/parse-exams.ts for the tag report)\n");
+    return;
+  }
+  const counts = new Map<string, number>();
+  let total = 0;
+  for (const f of fs.readdirSync(dir).filter((x) => x.endsWith(".json"))) {
+    const { questions } = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8"));
+    for (const q of questions ?? []) {
+      total += 1;
+      for (const id of q.concept_ids ?? []) counts.set(id, (counts.get(id) ?? 0) + 1);
+    }
+  }
+  console.log(`== ExamParser tag report: ${total} questions across ${fs.readdirSync(dir).length} exams ==`);
+  const untagged = concepts.filter((c) => c.sheelon !== "foundation" && !counts.has(c.id));
+  for (const [id, n] of [...counts.entries()].sort((a, b) => b[1] - a[1])) {
+    console.log(`  ${id.padEnd(36)} ${n} questions`);
+  }
+  if (untagged.length) {
+    console.log(`  ZERO tagged questions (${untagged.length}): ${untagged.map((c) => c.id).join(", ")}`);
+  }
+  console.log("");
+}
+
 async function main() {
   const root = path.join(__dirname, "..");
   const graph = JSON.parse(fs.readFileSync(path.join(root, "data/concepts_5u.json"), "utf8"));
   const concepts: Concept[] = graph.concepts;
+  taggedQuestionReport(root, concepts);
 
   const queries = concepts.map((c) => `${c.name_he} — ${c.name_en}. ${c.description}`);
   const vectors = await embed(queries, "validate-corpus");

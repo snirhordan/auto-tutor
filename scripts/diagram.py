@@ -136,7 +136,8 @@ block(19, 4.5, 32, 9, "Supabase (state)", [
 ], fc=RED_SOFT)
 block(56, 4.5, 34, 9, "Pinecone (vectors)", [
     ("namespaces: syllabus (Ministry curriculum) · exams", GREY, "normal"),
-    ("(10 y of real 581/582 papers) · notes-{student} (siloed)", GREY, "normal"),
+    ("(real 581/582 papers, per-question via offline", GREY, "normal"),
+    ("ExamParser [LLM · strict JSON]) · notes-{student}", GREY, "normal"),
 ], fc=RED_SOFT)
 
 arrow(35, 13.9, 44, 44.9, color=GREY, ls="--", lw=1.1)   # supabase → supervisor

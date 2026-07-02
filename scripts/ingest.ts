@@ -22,6 +22,22 @@ interface ManifestEntry {
   code?: number;
 }
 
+interface ParsedQuestion {
+  number: number;
+  text_he: string;
+  concept_ids: string[];
+  difficulty: string;
+  has_figure: boolean;
+}
+
+/** Exams parsed by scripts/parse-exams.ts (ExamParser) get one record per question. */
+function loadParsedQuestions(root: string, file: string): ParsedQuestion[] | null {
+  const p = path.join(root, "data/ministry/parsed", file + ".json");
+  if (!fs.existsSync(p)) return null;
+  const { questions } = JSON.parse(fs.readFileSync(p, "utf8"));
+  return questions?.length ? questions : null;
+}
+
 function chunk(text: string): string[] {
   const out: string[] = [];
   const stride = CHUNK_CHARS - OVERLAP_CHARS;
@@ -50,24 +66,46 @@ async function main() {
       console.log(`skip ${doc.file} (no extracted text)`);
       continue;
     }
-    const text = fs.readFileSync(txtPath, "utf8");
-    const chunks = chunk(text);
-    if (!chunks.length) continue;
-
-    const vectors = await embed(chunks, "ingest");
     const ns = doc.kind === "exam" ? NS_EXAMS : NS_SYLLABUS;
-    const records = chunks.map((c, i) => ({
-      id: `${doc.file}-${i}`,
-      values: vectors[i],
-      metadata: {
-        text: c,
-        source: doc.file,
-        kind: doc.kind,
-        ...(doc.year ? { year: doc.year } : {}),
-        ...(doc.season ? { season: doc.season } : {}),
-        ...(doc.code ? { code: doc.code } : {}),
-      },
-    }));
+    const docMeta = {
+      source: doc.file,
+      kind: doc.kind,
+      ...(doc.year ? { year: doc.year } : {}),
+      ...(doc.season ? { season: doc.season } : {}),
+      ...(doc.code ? { code: doc.code } : {}),
+    };
+
+    // Exams: prefer ExamParser output — one clean record per question, tagged
+    // with concept ids and difficulty. Fall back to raw chunks if not parsed.
+    const parsed = doc.kind === "exam" ? loadParsedQuestions(root, doc.file) : null;
+    type Meta = Record<string, string | number | boolean | string[]>;
+    let records: { id: string; values: number[]; metadata: Meta }[];
+    if (parsed) {
+      const texts = parsed.map((q) => q.text_he);
+      const vectors = await embed(texts, "ingest");
+      records = parsed.map((q, i) => ({
+        id: `${doc.file}-q${q.number}`,
+        values: vectors[i],
+        metadata: {
+          ...docMeta,
+          text: q.text_he,
+          question: q.number,
+          concept_ids: q.concept_ids,
+          difficulty: q.difficulty,
+          has_figure: q.has_figure,
+        },
+      }));
+    } else {
+      const text = fs.readFileSync(txtPath, "utf8");
+      const chunks = chunk(text);
+      if (!chunks.length) continue;
+      const vectors = await embed(chunks, "ingest");
+      records = chunks.map((c, i) => ({
+        id: `${doc.file}-${i}`,
+        values: vectors[i],
+        metadata: { ...docMeta, text: c },
+      }));
+    }
     for (let i = 0; i < records.length; i += 100) {
       await index().namespace(ns).upsert({ records: records.slice(i, i + 100) });
     }
