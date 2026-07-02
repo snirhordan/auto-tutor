@@ -14,7 +14,8 @@
     "validate-corpus": "tsx scripts/validate-corpus.ts",
     "capture-examples": "tsx scripts/capture-examples.ts",
     "budget": "tsx scripts/budget-report.ts",
-    "parse-exams": "tsx scripts/parse-exams.ts"
+    "parse-exams": "tsx scripts/parse-exams.ts",
+    "setup-pinecone": "tsx scripts/setup-pinecone.ts"
   },
   "dependencies": {
     "@pinecone-database/pinecone": "^8.0.0",

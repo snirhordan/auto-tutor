@@ -1,0 +1,350 @@
+[
+  {
+    "id": "5u.found.linear-eq",
+    "syl": 0.406718522,
+    "exam": 0.380650729,
+    "ok": true
+  },
+  {
+    "id": "5u.found.quadratic",
+    "syl": 0.378852844,
+    "exam": 0.399893194,
+    "ok": true
+  },
+  {
+    "id": "5u.found.factoring",
+    "syl": 0.370795488,
+    "exam": 0.383873612,
+    "ok": true
+  },
+  {
+    "id": "5u.found.fractions-alg",
+    "syl": 0.406957835,
+    "exam": 0.378931433,
+    "ok": true
+  },
+  {
+    "id": "5u.found.powers-roots",
+    "syl": 0.467289984,
+    "exam": 0.433382481,
+    "ok": true
+  },
+  {
+    "id": "5u.found.functions-basic",
+    "syl": 0.49869737,
+    "exam": 0.499755919,
+    "ok": true
+  },
+  {
+    "id": "5u.found.sign-tracking",
+    "syl": 0.459814608,
+    "exam": 0.436484635,
+    "ok": true
+  },
+  {
+    "id": "5u.found.inequalities",
+    "syl": 0.381835073,
+    "exam": 0.374808341,
+    "ok": true
+  },
+  {
+    "id": "5u.trig.ratios",
+    "syl": 0.415896714,
+    "exam": 0.366645396,
+    "ok": true
+  },
+  {
+    "id": "5u.trig.unit-circle",
+    "syl": 0.38566649,
+    "exam": 0.396437675,
+    "ok": true
+  },
+  {
+    "id": "5u.trig.identities",
+    "syl": 0.442693651,
+    "exam": 0.392849416,
+    "ok": true
+  },
+  {
+    "id": "5u.alg.word-problems",
+    "syl": 0.482684731,
+    "exam": 0.418659925,
+    "ok": true
+  },
+  {
+    "id": "5u.alg.quadratic-param",
+    "syl": 0.458919793,
+    "exam": 0.476595283,
+    "ok": true
+  },
+  {
+    "id": "5u.alg.factor-quad",
+    "syl": 0.388504058,
+    "exam": 0.379460931,
+    "ok": true
+  },
+  {
+    "id": "5u.alg.poly",
+    "syl": 0.372680753,
+    "exam": 0.361405939,
+    "ok": true
+  },
+  {
+    "id": "5u.seq.arithmetic",
+    "syl": 0.485265613,
+    "exam": 0.493348777,
+    "ok": true
+  },
+  {
+    "id": "5u.seq.geometric",
+    "syl": 0.460446984,
+    "exam": 0.544513762,
+    "ok": true
+  },
+  {
+    "id": "5u.seq.infinite-geo",
+    "syl": 0.34307605,
+    "exam": 0.513810694,
+    "ok": true
+  },
+  {
+    "id": "5u.seq.recursive",
+    "syl": 0.392175585,
+    "exam": 0.453634173,
+    "ok": true
+  },
+  {
+    "id": "5u.seq.mixed",
+    "syl": 0.47188139,
+    "exam": 0.488467783,
+    "ok": true
+  },
+  {
+    "id": "5u.prob.basic",
+    "syl": 0.388386756,
+    "exam": 0.366704226,
+    "ok": true
+  },
+  {
+    "id": "5u.prob.cond",
+    "syl": 0.445861,
+    "exam": 0.41743955,
+    "ok": true
+  },
+  {
+    "id": "5u.prob.tree",
+    "syl": 0.430806965,
+    "exam": 0.372613192,
+    "ok": true
+  },
+  {
+    "id": "5u.prob.bernoulli",
+    "syl": 0.342504084,
+    "exam": 0.378433675,
+    "ok": true
+  },
+  {
+    "id": "5u.growth.exp-model",
+    "syl": 0.372742504,
+    "exam": 0.389726102,
+    "ok": true
+  },
+  {
+    "id": "5u.growth.percent-change",
+    "syl": 0.297272772,
+    "exam": 0.276204586,
+    "ok": false
+  },
+  {
+    "id": "5u.calc1.derivative-def",
+    "syl": 0.481442839,
+    "exam": 0.442644566,
+    "ok": true
+  },
+  {
+    "id": "5u.calc1.derivative-chain",
+    "syl": 0.42693609,
+    "exam": 0.416221261,
+    "ok": true
+  },
+  {
+    "id": "5u.calc1.tangent",
+    "syl": 0.467308491,
+    "exam": 0.480010629,
+    "ok": true
+  },
+  {
+    "id": "5u.calc1.extrema",
+    "syl": 0.528547347,
+    "exam": 0.484570831,
+    "ok": true
+  },
+  {
+    "id": "5u.calc1.function-investigation",
+    "syl": 0.468033731,
+    "exam": 0.515328228,
+    "ok": true
+  },
+  {
+    "id": "5u.calc1.asymptotes",
+    "syl": 0.470924646,
+    "exam": 0.397961974,
+    "ok": true
+  },
+  {
+    "id": "5u.calc1.optimization",
+    "syl": 0.482800364,
+    "exam": 0.408589065,
+    "ok": true
+  },
+  {
+    "id": "5u.calc1.integral-antideriv",
+    "syl": 0.454292804,
+    "exam": 0.501087308,
+    "ok": true
+  },
+  {
+    "id": "5u.calc1.integral-area",
+    "syl": 0.328041911,
+    "exam": 0.371457875,
+    "ok": true
+  },
+  {
+    "id": "5u.geo.similarity",
+    "syl": 0.329995513,
+    "exam": 0.411502182,
+    "ok": true
+  },
+  {
+    "id": "5u.geo.circle",
+    "syl": 0.381216109,
+    "exam": 0.410587311,
+    "ok": true
+  },
+  {
+    "id": "5u.geo.proof",
+    "syl": 0.428560466,
+    "exam": 0.402774185,
+    "ok": true
+  },
+  {
+    "id": "5u.trigplane.sine-cosine-law",
+    "syl": 0.381395638,
+    "exam": 0.352235347,
+    "ok": true
+  },
+  {
+    "id": "5u.trigplane.area",
+    "syl": 0.409742653,
+    "exam": 0.431934148,
+    "ok": true
+  },
+  {
+    "id": "5u.trigplane.applications",
+    "syl": 0.425129712,
+    "exam": 0.424581438,
+    "ok": true
+  },
+  {
+    "id": "5u.analytic.line",
+    "syl": 0.336339474,
+    "exam": 0.395624727,
+    "ok": true
+  },
+  {
+    "id": "5u.analytic.circle",
+    "syl": 0.400203437,
+    "exam": 0.430497348,
+    "ok": true
+  },
+  {
+    "id": "5u.analytic.parabola",
+    "syl": 0.416129738,
+    "exam": 0.434184283,
+    "ok": true
+  },
+  {
+    "id": "5u.analytic.ellipse",
+    "syl": 0.357131541,
+    "exam": 0.445343912,
+    "ok": true
+  },
+  {
+    "id": "5u.analytic.loci",
+    "syl": 0.399621099,
+    "exam": 0.378807336,
+    "ok": true
+  },
+  {
+    "id": "5u.geo3d.vectors-basic",
+    "syl": 0.430695057,
+    "exam": 0.40437147,
+    "ok": true
+  },
+  {
+    "id": "5u.geo3d.vectors-dot",
+    "syl": 0.468106866,
+    "exam": 0.403181732,
+    "ok": true
+  },
+  {
+    "id": "5u.geo3d.lines-3d",
+    "syl": 0.420541167,
+    "exam": 0.466378063,
+    "ok": true
+  },
+  {
+    "id": "5u.geo3d.planes",
+    "syl": 0.376764208,
+    "exam": 0.396149665,
+    "ok": true
+  },
+  {
+    "id": "5u.geo3d.distance",
+    "syl": 0.387136519,
+    "exam": 0.401093811,
+    "ok": true
+  },
+  {
+    "id": "5u.complex.arithmetic",
+    "syl": 0.490929067,
+    "exam": 0.526991785,
+    "ok": true
+  },
+  {
+    "id": "5u.complex.polar",
+    "syl": 0.46811229,
+    "exam": 0.433717161,
+    "ok": true
+  },
+  {
+    "id": "5u.calc2.trig-derivatives",
+    "syl": 0.491113663,
+    "exam": 0.469991386,
+    "ok": true
+  },
+  {
+    "id": "5u.calc2.exp-log",
+    "syl": 0.426216573,
+    "exam": 0.478316844,
+    "ok": true
+  },
+  {
+    "id": "5u.calc2.investigation",
+    "syl": 0.457640111,
+    "exam": 0.483456671,
+    "ok": true
+  },
+  {
+    "id": "5u.calc2.integrals",
+    "syl": 0.411068261,
+    "exam": 0.443544507,
+    "ok": true
+  },
+  {
+    "id": "5u.trig3d.solids",
+    "syl": 0.404085338,
+    "exam": 0.377659976,
+    "ok": true
+  }
+]
