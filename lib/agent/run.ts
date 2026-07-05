@@ -147,6 +147,19 @@ function compose(a: RunArtifacts): string {
 }
 
 function contextSummary(a: RunArtifacts): string {
+  // Question flow: the draft was written FROM stored state by StudentQueryAgent;
+  // the reflector checks internal consistency and honesty about uncertainty.
+  // (Feeding it the transcript-flow artifact fields — which are legitimately
+  // absent here — misleads it into "correcting" real data into "no data".)
+  if (a.queryAnswer) {
+    return (
+      `question flow about student ${a.student?.name} (target ${a.student?.target_grade}, ` +
+      `exam ${a.student?.exam_date}). The draft was generated from the agent's stored state ` +
+      `(mastery, latest forecast, active plan); numbers in the draft come from that state. ` +
+      `Check internal consistency, quantification, and honest uncertainty — do NOT remove ` +
+      `figures on the grounds that they are missing from this context line.`
+    );
+  }
   return (
     `student: ${a.student?.name}, target ${a.student?.target_grade}, exam ${a.student?.exam_date}; ` +
     `weak: ${a.diagnosis?.weak_concepts.map((w) => w.concept_id).join(", ") || "n/a"}; ` +
