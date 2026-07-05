@@ -2,8 +2,8 @@
 // Team info + model names + agent guardrails live here so they are one-line changes.
 
 export const TEAM_INFO = {
-  // TODO before submission: replace with the real {batch#}_{order#} from the presentation list.
-  group_batch_order_number: "TBD_TBD",
+  // Batch 3, group 8 — presenting 20.7.2026.
+  group_batch_order_number: "3_8",
   team_name: "The Autonomous",
   students: [
     { name: "Snir Hordan", email: "snirhordan@campus.technion.ac.il" },

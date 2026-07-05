@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface Step {
   module: string;
@@ -99,10 +101,12 @@ export default function Home() {
       {history.map((t, i) => (
         <div className="card" key={history.length - i}>
           <div className="who">You</div>
-          <div className="prompt-echo">{t.prompt}</div>
+          <div className="prompt-echo" dir="auto">{t.prompt}</div>
           <div className="who" style={{ marginTop: "0.8rem" }}>AutoTutor</div>
           {t.status === "ok" ? (
-            <div className="response">{t.response}</div>
+            <div className="response" dir="auto">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{t.response}</ReactMarkdown>
+            </div>
           ) : (
             <div className="error">{t.error}</div>
           )}
