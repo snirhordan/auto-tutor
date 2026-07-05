@@ -172,10 +172,37 @@ export async function executeAgent(prompt: string): Promise<ExecuteResult> {
       break;
     }
   }
+  // Deterministic guarantee: the onboarding-assumptions disclosure survives any
+  // LLM rewrite. If a reflection revision stripped it, re-attach it up front —
+  // the tutor must always see what the agent assumed about a brand-new profile.
+  if (artifacts.onboarded && !final.includes(artifacts.onboarded.exam_date)) {
+    final = onboardSection(artifacts) + "\n\n" + final;
+    trace.addCode(
+      "ResponseComposer",
+      "re-attach onboarding disclosure (stripped by a reflection rewrite)",
+      { reattached: true },
+    );
+  }
   return { response: final, steps: trace.steps };
 }
 
 // ---------- response assembly (deterministic) ----------
+
+/** The onboarding-assumptions disclosure. Factored out so the post-reflection
+ *  guard can re-attach it if an LLM rewrite strips it — the tutor must always
+ *  see what the agent assumed about a student it invented a profile for. */
+function onboardSection(a: RunArtifacts): string {
+  const o = a.onboarded!;
+  return a.language === "he"
+    ? `## תלמיד/ה חדש/ה נוסף/ה למערכת: ${o.name}\n` +
+        `הונח תאריך בחינה: **${o.exam_date}**; יעד ציון מונח: **${o.target_grade}**.\n` +
+        `אין נתונים קודמים — כל מושג מתחיל ב-0.5 שליטה עם ביטחון נמוך.\n` +
+        `אפשר לתקן את תאריך הבחינה או את יעד הציון פשוט על ידי מענה כאן.`
+    : `## New student onboarded: ${o.name}\n` +
+        `Assumed exam date: **${o.exam_date}**; assumed target grade: **${o.target_grade}**.\n` +
+        `No prior data — every concept starts at 0.5 mastery with low confidence.\n` +
+        `You can correct the exam date or target grade just by replying.`;
+}
 
 function compose(a: RunArtifacts): string {
   if (a.queryAnswer) return a.queryAnswer;
@@ -183,18 +210,7 @@ function compose(a: RunArtifacts): string {
   const he = a.language === "he";
 
   if (a.onboarded) {
-    const o = a.onboarded;
-    s.push(
-      he
-        ? `## תלמיד/ה חדש/ה נוסף/ה למערכת: ${o.name}\n` +
-          `הונח תאריך בחינה: **${o.exam_date}**; יעד ציון מונח: **${o.target_grade}**.\n` +
-          `אין נתונים קודמים — כל מושג מתחיל ב-0.5 שליטה עם ביטחון נמוך.\n` +
-          `אפשר לתקן את תאריך הבחינה או את יעד הציון פשוט על ידי מענה כאן.`
-        : `## New student onboarded: ${o.name}\n` +
-          `Assumed exam date: **${o.exam_date}**; assumed target grade: **${o.target_grade}**.\n` +
-          `No prior data — every concept starts at 0.5 mastery with low confidence.\n` +
-          `You can correct the exam date or target grade just by replying.`,
-    );
+    s.push(onboardSection(a));
   }
   if (a.analysis) {
     s.push(`## ${he ? "סיכום המפגש" : "Session summary"}\n${a.analysis.session_summary}`);
@@ -266,6 +282,12 @@ function contextSummary(a: RunArtifacts): string {
     a.pace?.on_track === true &&
     !a.roadmap;
   return (
+    (a.onboarded
+      ? `NOTE: this student was JUST ONBOARDED from this very transcript — the agent created ` +
+        `the profile and ASSUMED exam date ${a.onboarded.exam_date} and target grade ` +
+        `${a.onboarded.target_grade}. The draft MUST open with the onboarding-assumptions ` +
+        `section; that section is correct and required — never remove or dispute it. `
+      : "") +
     `student: ${a.student?.name}, target ${a.student?.target_grade}, exam ${a.student?.exam_date}; ` +
     `weak: ${a.diagnosis?.weak_concepts.map((w) => w.concept_id).join(", ") || "n/a"}; ` +
     `root causes: ${a.diagnosis?.root_causes.map((r) => r.concept_id).join(", ") || "n/a"}; ` +
