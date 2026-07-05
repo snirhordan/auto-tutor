@@ -2,8 +2,8 @@
 // Team info + model names + agent guardrails live here so they are one-line changes.
 
 export const TEAM_INFO = {
-  // Batch 3, group 8 — presenting 20.7.2026.
-  group_batch_order_number: "3_8",
+  // Batch 3, group 6 — presenting 20.7.2026.
+  group_batch_order_number: "3_6",
   team_name: "The Autonomous",
   students: [
     { name: "Snir Hordan", email: "snirhordan@campus.technion.ac.il" },
