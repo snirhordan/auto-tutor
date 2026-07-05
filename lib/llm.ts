@@ -7,6 +7,10 @@ import { logUsage } from "./supabase";
 export const openai = new OpenAI({
   apiKey: process.env.LLMOD_API_KEY,
   baseURL: process.env.LLMOD_BASE_URL,
+  // LLMod occasionally returns transient 429/5xx on long agent runs; the SDK
+  // retries those with exponential backoff — default of 2 is not enough.
+  maxRetries: 5,
+  timeout: 120_000,
 });
 
 export interface ChatArgs {
@@ -45,12 +49,12 @@ export async function chat({ module, system, user, runId }: ChatArgs): Promise<C
   };
 }
 
-/** Chat call whose answer must be a JSON object. Retries once on parse failure. */
+/** Chat call whose answer must be a JSON object. Up to 3 attempts on parse failure. */
 export async function chatJSON<T>(args: ChatArgs): Promise<{ value: T; raw: ChatResult }> {
   const sys = args.system + "\nReturn ONLY a valid JSON object. No prose, no markdown fences.";
   let raw = await chat({ ...args, system: sys });
   let parsed = tryParse<T>(raw.text);
-  if (parsed === undefined) {
+  for (let attempt = 0; parsed === undefined && attempt < 2; attempt++) {
     raw = await chat({
       ...args,
       system: sys,

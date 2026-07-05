@@ -1,10 +1,407 @@
 {
-  "captured_from_real_runs": false,
+  "captured_from_real_runs": true,
   "prompt_examples": [
     {
-      "prompt": "Student: Itai\nTutor: Let's compute the angle between u=(1,-2,2) and v=(3,0,-4).\nItai: u·v = 3 + 0 + 8 = 11.\nTutor: Check the last term again.\nItai: Oh — 2·(-4) is -8, so it's 3 - 8 = -5. Then cos θ = -5/(3·5) = -1/3, θ ≈ 109°.\nTutor: Good. Why is cos negative here?\nItai: Because... the angle is more than 90? I always mix up which quadrants cosine is negative in.\nTutor: We'll come back to that. Try |u|.\nItai: √(1+4+4) = 3, easy.",
-      "full_response": "(placeholder — run `npx tsx scripts/capture-examples.ts` after seeding to record a real run, including its full steps[])",
-      "steps": []
+      "prompt": "Student: Itai\nTutor: Today let's work on vectors — start with the angle between u=(1,-2,2) and v=(3,0,-4).\nItai: u·v = 3 + 0 + 8 = 11.\nTutor: Check the last term again.\nItai: Oh — 2·(-4) is -8, so it's 3 + 0 - 8 = -5. Then cos θ = -5/(|u||v|) = -5/15 = -1/3, so θ ≈ 109°.\nTutor: Good recovery. Why is the cosine negative here — what does that tell you?\nItai: Because the angle is more than 90? Honestly I always mix up in which quadrants cosine is negative.\nTutor: We'll come back to that. Compute |u| for me.\nItai: √(1+4+4) = 3. Easy.\nTutor: Now a harder one — find a vector perpendicular to both u and w=(0,1,1).\nItai: Perpendicular to both... so the dot product with each is zero. I set (x,y,z)·(1,-2,2)=0 and (x,y,z)·(0,1,1)=0... x - 2y + 2z = 0 and y + z = 0. So y = -z, then x = -2z - 2z... wait, x - 2(-z) + 2z = 0 so x + 4z = 0, x = -4z. So (-4, -1, 1) for z=1.\nTutor: Check the sign on the middle step once more.\nItai: x - 2y + 2z with y=-z gives x + 2z + 2z = x + 4z = 0. Yes, (-4,-1,1).\nTutor: Right. Last one — in the pyramid we did last week, the angle between the lateral edge and the base. Set it up.\nItai: I drop the height to the center... then the angle is between the edge and its projection. tan of the angle = height over the projection length. I remember the setup but I got confused last time about whether it's sine or tangent when I have the edge length.\nTutor: We're out of time — practice the quadrant signs for next time, it's costing you marks on every vectors question.",
+      "full_response": "## Session summary\nVectors session: the student corrected a dot-product sign error with prompting, computed a vector magnitude correctly, solved a perpendicular-vector system successfully after a minor sign check, and showed partial conceptual understanding of angle setup in a 3D pyramid but confusion about trig ratios/signs in quadrants.\n\n## Mastery updates\n- `5u.geo3d.vectors-dot`: 0.45 → **0.293**\n- `5u.geo3d.vectors-dot`: 0.293 → **0.365**\n- `5u.geo3d.vectors-basic`: 0.6 → **0.74**\n- `5u.geo3d.vectors-dot`: 0.365 → **0.412**\n- `5u.trigplane.applications`: 0.75 → **0.663**\n\n## Diagnosis\nThe main weakness is in `5u.geo3d.vectors-dot`: the student can form vectors and knows the magnitude idea, but still flips signs when substituting coordinates and evaluating dot products. The issue is sign tracking during algebraic substitution, not the dot-product formula itself. A secondary weakness is in `5u.trigplane.applications` and `5u.trig.ratios`: the student is unsure which trig ratio fits the diagram, so they need practice selecting the ratio from the geometry before computing. Confidence is high for the dot-product issue and moderate for the trig-ratio issue.\n\n## Pace & forecast\n- Days to exam: **17**\n- Sessions left: **4**\n- Weighted mastery: **0.73**\n- Grade forecast: **66.6** · on_track: **false**\n\n## Roadmap\n1. [`5u.geo3d.vectors-dot`, `5u.found.sign-tracking`] — Stabilize dot-product work by fixing sign handling in coordinate substitution and vector algebra; drill mixed positive/negative component cases until the setup is automatic.\n2. [`5u.trig.ratios`, `5u.trigplane.applications`] — Choose the correct trig ratio from the geometry of the triangle/diagram, then apply it in worded plane-trigonometry problems without mixing up opposite, adjacent, and hypotenuse.\n3. [`5u.geo3d.vectors-basic`] — Consolidate core vector skills that support the dot-product work and provide easier points on exam items.\n4. [`5u.geo3d.planes`] — Use only if the dot-product work stabilizes early; otherwise keep focus on the first two gaps.\n\n> Replan/triage: With only 4 sessions left, prioritize the highest-impact gap first: 3D vectors dot products and sign tracking, then trig-ratio/application work. Keep the rest narrow and only as needed for exam coverage.\n\n## Next-session brief\n### 3-minute warm-up\n- Quick mental drill: compute 3 dot products with mixed signs, e.g. \\((2,-3)\\cdot(4,1)\\), \\((-5,2)\\cdot(1,-6)\\), \\((3,-4)\\cdot(-2,-7)\\). Ask student to write the expansion first, then evaluate.\n- Ask: “Which term changes sign when you substitute a negative coordinate?” Have them verbalize the rule before calculating.\n\n### Main work\n1. **Bagrut-style coordinate geometry with dot product**\n   - Given points \\(A,B,C\\), find \\(\\vec{AB}\\cdot\\vec{AC}\\) or check perpendicularity using coordinates.\n   - Focus on forming vectors correctly from coordinates, then doing the scalar product with careful sign tracking.\n\n2. **Mixed positive/negative component vectors**\n   - Compute \\((a,b)\\cdot(c,d)\\) where one or both vectors contain negatives, fractions, or variables.\n   - Require a written setup line before arithmetic: \\(ax+by\\), then substitute, then simplify.\n\n### Watch for\n- **Sign-flip:** student changes a coordinate’s sign incorrectly when forming \\(\\vec{AB}\\) or substituting negatives. Intervene by making them rewrite the vector as “end minus start” and box each coordinate before expanding.\n- **Ratio-confusion:** if they start treating dot-product problems like proportionality/slope tasks, redirect to “multiply coordinates, then add.”\n- If arithmetic errors appear, stop and have them check each product separately before summing.\n\n### Exit check\n- Ask: “Given \\(\\vec{a}=(-2,5)\\) and \\(\\vec{b}=(3,-4)\\), compute \\(\\vec{a}\\cdot\\vec{b}\\) and state whether the vectors are perpendicular.”",
+      "steps": [
+        {
+          "module": "IntentRouter",
+          "prompt": {
+            "system_prompt": "You are IntentRouter of an autonomous bagrut-math tutoring agent.\nClassify the user's input:\n- \"transcript\": a tutoring-session transcript (dialogue/notes of a real session) to be processed\n- \"question\": a question about a student's progress, forecast, plan, or what to do next with them\n- \"out_of_scope\": anything else (solve-my-homework requests, non-tutoring topics, other subjects)\nAlso extract student_ref: the student's name or id if one is mentioned (from a \"Student:\" header,\nthe dialogue, or the question), else null.\n\nExamples:\nInput: \"Student: Itai\\nTutor: let's compute u·v... Itai: 3+0+8=11...\" → {\"intent\": \"transcript\", \"student_ref\": \"Itai\", \"reason\": \"session dialogue with math work\"}\nInput: \"How is Noa doing? Will she hit her target?\" → {\"intent\": \"question\", \"student_ref\": \"Noa\", \"reason\": \"asks about stored student state\"}\nInput: \"מה שלום דנה? כמה שיעורים נשארו לה?\" → {\"intent\": \"question\", \"student_ref\": \"דנה\", \"reason\": \"Hebrew question about a student's plan\"}\nInput: \"Solve x^2-5x+6=0 for me\" → {\"intent\": \"out_of_scope\", \"student_ref\": null, \"reason\": \"homework solving, not tutoring telemetry\"}\nInput: \"What's the best pizza in Haifa?\" → {\"intent\": \"out_of_scope\", \"student_ref\": null, \"reason\": \"unrelated to tutoring\"}\n\nReply in strict JSON: {\"intent\": \"...\", \"student_ref\": \"... or null\", \"reason\": \"...\"}",
+            "user_prompt": "INPUT:\nStudent: Itai\nTutor: Today let's work on vectors — start with the angle between u=(1,-2,2) and v=(3,0,-4).\nItai: u·v = 3 + 0 + 8 = 11.\nTutor: Check the last term again.\nItai: Oh — 2·(-4) is -8, so it's 3 + 0 - 8 = -5. Then cos θ = -5/(|u||v|) = -5/15 = -1/3, so θ ≈ 109°.\nTutor: Good recovery. Why is the cosine negative here — what does that tell you?\nItai: Because the angle is more than 90? Honestly I always mix up in which quadrants cosine is negative.\nTutor: We'll come back to that. Compute |u| for me.\nItai: √(1+4+4) = 3. Easy.\nTutor: Now a harder one — find a vector perpendicular to both u and w=(0,1,1).\nItai: Perpendicular to both... so the dot product with each is zero. I set (x,y,z)·(1,-2,2)=0 and (x,y,z)·(0,1,1)=0... x - 2y + 2z = 0 and y + z = 0. So y = -z, then x = -2z - 2z... wait, x - 2(-z) + 2z = 0 so x + 4z = 0, x = -4z. So (-4, -1, 1) for z=1.\nTutor: Check the sign on the middle step once more.\nItai: x - 2y + 2z with y=-z gives x + 2z + 2z = x + 4z = 0. Yes, (-4,-1,1).\nTutor: Right. Last one — in the pyramid we did last week, the angle between the lateral edge and the base. Set it up.\nItai: I drop the height to the center... then the angle is between the edge and its projection. tan of the angle = height over the projection length. I remember the setup but I got confused last time about whether it's sine or tangent when I have the edge length.\nTutor: We're out of time — practice the quadrant signs for next time, it's costing you marks on every vectors question."
+          },
+          "response": {
+            "intent": "transcript",
+            "student_ref": "Itai",
+            "reason": "session dialogue with math work and tutoring interaction"
+          },
+          "llm": true
+        },
+        {
+          "module": "SupervisorAgent",
+          "prompt": {
+            "system_prompt": "You are SupervisorAgent, the coordinator of an autonomous bagrut-math tutoring agent.\nSTANDING GOAL: Bring every student to their target grade by their bagrut exam date, by maintaining an accurate model of what they know, planning their remaining lessons, and correcting your own past assessments as new evidence arrives.\nYou receive an EVENT (session transcript) or a QUESTION — never a command. Decide which specialist\nto dispatch next, based on what is known so far:\n- {\"dispatch\": \"DiagnosisAgent\"} — analyze the transcript: extract evidence, update mastery, find root-cause gaps, maybe generate probes. Required before planning on a transcript event.\n- {\"dispatch\": \"AssessmentAgent\"} — recompute pace vs the exam calendar and the grade forecast; if a prior forecast exists it will self-audit. Requires diagnosis on transcript events.\n- {\"dispatch\": \"PlannerAgent\"} — build or revise the lesson roadmap and write the next-session brief. Requires assessment.\n- {\"dispatch\": \"StudentQueryAgent\"} — answer a question from stored state (question intent only).\n- {\"dispatch\": \"finalize\"} — all work needed for THIS event is done; assemble the response.\nThink about what THIS event actually requires — a clean session may need no probes and only a light\nplan touch; a question needs no diagnosis at all. Do not dispatch an agent twice.\nReply in strict JSON: {\"thought\": \"...\", \"dispatch\": \"...\"}",
+            "user_prompt": "EVENT TYPE: transcript\nSTUDENT: Itai (stu-itai-h11), exam 2026-07-22, target 92\nTRANSCRIPT LENGTH: 1499 chars\nALREADY DISPATCHED: none\nARTIFACTS SO FAR:\n- diagnosis: no\n- mastery updates: no\n- assessment: no\n- plan: no\n- query answer: no"
+          },
+          "response": {
+            "thought": "This is a transcript event with no prior diagnosis, so I need to first extract evidence and update mastery before any assessment or planning. No query involved.",
+            "dispatch": "DiagnosisAgent"
+          },
+          "llm": true
+        },
+        {
+          "module": "DiagnosisAgent.TranscriptAnalyzer",
+          "prompt": {
+            "system_prompt": "You are a veteran Israeli 5-unit bagrut math tutor reviewing a raw session transcript.\nExtract EVIDENCE EVENTS: moments where the student demonstrably succeeded, failed, or partially\nhandled a specific concept. Map every event onto the closest concept_id from the provided catalog —\nnever invent ids. Tag recurring mistake types as short kebab-case error_pattern tags\n(e.g. \"sign-flip\", \"quadrant-confusion\", \"formula-recall\").\nIf the transcript is too fragmentary to extract meaningful evidence (a few lines, cut off,\nmissing the actual math work), set incomplete=true and write ONE precise clarification question\nin clarification_needed asking the tutor for what is missing.\nReply in strict JSON:\n{\"session_summary\": \"...\", \"evidence\": [{\"concept_id\": \"...\", \"outcome\": \"correct|error|partial\",\n\"error_pattern\": \"...\", \"quote\": \"...\"}], \"incomplete\": false, \"clarification_needed\": null}\n\nExample 1 — input:\n\"Tutor: find the angle between u=(1,-2,2) and v=(3,0,-4). Itai: u·v = 3+0+8 = 11. Tutor: check the last term.\nItai: oh, 2·(-4) is -8... so 3-8=-5. Then cos = -5/15, angle ≈ 109°. Tutor: good. Now derive |u|. Itai: 3, instantly.\"\nOutput:\n{\"session_summary\": \"Vectors session: dot-product sign error self-corrected with prompting; magnitudes fluent.\",\n\"evidence\": [\n {\"concept_id\": \"5u.geo3d.vectors-dot\", \"outcome\": \"error\", \"error_pattern\": \"sign-flip\", \"quote\": \"u·v = 3+0+8 = 11\"},\n {\"concept_id\": \"5u.geo3d.vectors-dot\", \"outcome\": \"partial\", \"error_pattern\": null, \"quote\": \"cos = -5/15, angle ≈ 109°\"},\n {\"concept_id\": \"5u.geo3d.vectors-basic\", \"outcome\": \"correct\", \"error_pattern\": null, \"quote\": \"|u| = 3, instantly\"}],\n\"incomplete\": false, \"clarification_needed\": null}\n\nExample 2 — input:\n\"Tutor: let's review the homework. Noa: I did questions 1-4.\"\nOutput:\n{\"session_summary\": \"Fragment only — no mathematical work shown.\", \"evidence\": [],\n\"incomplete\": true, \"clarification_needed\": \"The transcript ends before any math work appears — please paste the part of the session where the student actually solves problems (or state which concepts were worked on and how the student did).\"}",
+            "user_prompt": "CONCEPT CATALOG:\n5u.found.linear-eq = Linear equations and systems / משוואות ממעלה ראשונה ומערכות\n5u.found.quadratic = Quadratic equations / משוואות ריבועיות\n5u.found.factoring = Algebraic factoring / פירוק לגורמים\n5u.found.fractions-alg = Algebraic fractions / שברים אלגבריים\n5u.found.powers-roots = Powers and roots / חזקות ושורשים\n5u.found.functions-basic = Function concept and graphs / מושג הפונקציה וגרפים\n5u.found.sign-tracking = Sign tracking in long expressions / מעקב סימנים בביטויים ארוכים\n5u.found.inequalities = Inequalities / אי-שוויונות\n5u.trig.ratios = Trigonometric ratios / יחסים טריגונומטריים\n5u.trig.unit-circle = Unit circle and radians / מעגל היחידה ורדיאנים\n5u.trig.identities = Basic trigonometric identities / זהויות טריגונומטריות\n5u.alg.word-problems = Word problems (motion, work, percent) / בעיות מילוליות (תנועה, הספק, אחוזים)\n5u.alg.quadratic-param = Equations with parameters / משוואות עם פרמטרים\n5u.alg.factor-quad = Factoring polynomials and quadratic trinomials / פירוק פולינומים וטרינומים ריבועיים\n5u.alg.poly = Polynomial manipulation / פעולות בפולינומים\n5u.seq.arithmetic = Arithmetic sequences / סדרות חשבוניות\n5u.seq.geometric = Geometric sequences / סדרות הנדסיות\n5u.seq.infinite-geo = Infinite geometric series / סדרה הנדסית אינסופית\n5u.seq.recursive = Recursive sequences / סדרות רקורסיביות\n5u.seq.mixed = Combined sequence problems / בעיות סדרות משולבות\n5u.prob.basic = Basic probability and counting / הסתברות בסיסית\n5u.prob.cond = Conditional probability and Bayes / הסתברות מותנית ובייס\n5u.prob.tree = Probability trees and tables / עצי הסתברות וטבלאות\n5u.prob.bernoulli = Bernoulli trials (binomial) / ניסויי ברנולי\n5u.growth.exp-model = Exponential growth and decay models / גדילה ודעיכה\n5u.growth.percent-change = Repeated percent change / שינוי באחוזים חוזר\n5u.calc1.derivative-def = Derivative concept and rules / מושג הנגזרת וכללי גזירה\n5u.calc1.derivative-chain = Chain rule / כלל השרשרת\n5u.calc1.tangent = Tangent lines / משיק לגרף פונקציה\n5u.calc1.extrema = Extrema and monotonicity / נקודות קיצון ותחומי עלייה וירידה\n5u.calc1.function-investigation = Full function investigation (poly/rational/root) / חקירת פונקציה מלאה\n5u.calc1.asymptotes = Asymptotes of rational functions / אסימפטוטות\n5u.calc1.optimization = Optimization word problems / בעיות קיצון\n5u.calc1.integral-antideriv = Antiderivatives / פונקציה קדומה\n5u.calc1.integral-area = Definite integrals and area / אינטגרל מסוים ושטחים\n5u.geo.similarity = Similarity of triangles / דמיון משולשים\n5u.geo.circle = Circle geometry / גאומטריית המעגל\n5u.geo.proof = Formal Euclidean proof writing / כתיבת הוכחה גאומטרית\n5u.trigplane.sine-cosine-law = Laws of sines and cosines / משפט הסינוסים ומשפט הקוסינוסים\n5u.trigplane.area = Trigonometric area formulas / שטחים בעזרת טריגונומטריה\n5u.trigplane.applications = Plane trigonometry problems / בעיות טריגונומטריה במישור\n5u.analytic.line = The straight line / הישר\n5u.analytic.circle = The circle (analytic) / המעגל האנליטי\n5u.analytic.parabola = The parabola / הפרבולה\n5u.analytic.ellipse = The ellipse / האליפסה\n5u.analytic.loci = Loci and parameters / מקומות גאומטריים\n5u.geo3d.vectors-basic = Vector algebra basics / יסודות האלגברה הווקטורית\n5u.geo3d.vectors-dot = Scalar (dot) product / מכפלה סקלרית\n5u.geo3d.lines-3d = Lines in space / ישרים במרחב\n5u.geo3d.planes = Planes in space / מישורים במרחב\n5u.geo3d.distance = Distances in space / מרחקים במרחב\n5u.complex.arithmetic = Complex number arithmetic / חשבון מספרים מרוכבים\n5u.complex.polar = Polar form and de Moivre / הצגה קוטבית ומשפט דה-מואבר\n5u.calc2.trig-derivatives = Derivatives of trigonometric functions / נגזרות של פונקציות טריגונומטריות\n5u.calc2.exp-log = Exponential and logarithmic functions / פונקציות מעריכיות ולוגריתמיות\n5u.calc2.investigation = Investigation of trig/exp/log functions / חקירת פונקציות טריגונומטריות ומעריכיות\n5u.calc2.integrals = Integrals of trig/exp functions / אינטגרלים של פונקציות טריגונומטריות ומעריכיות\n5u.trig3d.solids = 3D trigonometry in solid …[truncated]"
+          },
+          "response": {
+            "session_summary": "Vectors session: the student corrected a dot-product sign error with prompting, computed a vector magnitude correctly, solved a perpendicular-vector system successfully after a minor sign check, and showed partial conceptual understanding of angle setup in a 3D pyramid but confusion about trig ratios/signs in quadrants.",
+            "evidence": [
+              {
+                "concept_id": "5u.geo3d.vectors-dot",
+                "outcome": "error",
+                "error_pattern": "sign-flip",
+                "quote": "u·v = 3 + 0 + 8 = 11."
+              },
+              {
+                "concept_id": "5u.geo3d.vectors-dot",
+                "outcome": "partial",
+                "error_pattern": null,
+                "quote": "Then cos θ = -5/(|u||v|) = -5/15 = -1/3, so θ ≈ 109°."
+              },
+              {
+                "concept_id": "5u.geo3d.vectors-basic",
+                "outcome": "correct",
+                "error_pattern": null,
+                "quote": "√(1+4+4) = 3. Easy."
+              },
+              {
+                "concept_id": "5u.geo3d.vectors-dot",
+                "outcome": "partial",
+                "error_pattern": "sign-flip",
+                "quote": "x - 2y + 2z = 0 and y + z = 0... wait, x - 2(-z) + 2z = 0 so x + 4z = 0, x = -4z. So (-4, -1, 1) for z=1."
+              },
+              {
+                "concept_id": "5u.trigplane.applications",
+                "outcome": "partial",
+                "error_pattern": "ratio-confusion",
+                "quote": "I remember the setup but I got confused last time about whether it's sine or tangent when I have the edge length."
+              }
+            ],
+            "incomplete": false,
+            "clarification_needed": null
+          },
+          "llm": true
+        },
+        {
+          "module": "DiagnosisAgent.MasteryUpdater",
+          "prompt": {
+            "system_prompt": "(deterministic module — no LLM call)",
+            "user_prompt": "apply 5 evidence events (learn-rate 0.35, decay half-life 45d)"
+          },
+          "response": {
+            "changes": [
+              {
+                "concept_id": "5u.geo3d.vectors-dot",
+                "from": 0.45,
+                "to": 0.293
+              },
+              {
+                "concept_id": "5u.geo3d.vectors-dot",
+                "from": 0.293,
+                "to": 0.365
+              },
+              {
+                "concept_id": "5u.geo3d.vectors-basic",
+                "from": 0.6,
+                "to": 0.74
+              },
+              {
+                "concept_id": "5u.geo3d.vectors-dot",
+                "from": 0.365,
+                "to": 0.412
+              },
+              {
+                "concept_id": "5u.trigplane.applications",
+                "from": 0.75,
+                "to": 0.663
+              }
+            ]
+          },
+          "llm": false
+        },
+        {
+          "module": "DiagnosisAgent",
+          "prompt": {
+            "system_prompt": "You are DiagnosisAgent, the diagnostic specialist of an autonomous bagrut-math\ntutoring agent — persona: a veteran 5-unit tutor who root-causes errors instead of treating symptoms.\nYou work in a ReAct loop (Thought → Action → Observation). Reason step by step (chain of thought) in\n\"thought\", then pick ONE action:\n- {\"action\": \"diagnose_gaps\", \"args\": {\"concept_ids\": [\"...\"]}} — traverse the prerequisite graph below the listed weak concepts to find root causes\n- {\"action\": \"search_curriculum\", \"args\": {\"namespace\": \"syllabus|exams|notes\", \"query\": \"...\"}} — retrieve from the real Ministry corpus (syllabus text, past bagrut items) or this student's session notes\n- {\"action\": \"generate_probes\", \"args\": {\"targets\": [{\"concept_id\": \"...\", \"reason\": \"...\"}]}} — ONLY when the evidence is too thin/ambiguous to tell competing explanations apart; produces opening questions for the next session\n- {\"action\": \"finish\", \"args\": {\"statement\": \"...\"}} — one-paragraph diagnosis: WHAT is weak, WHY (root cause vs symptom), and how confident you are\n\nRules: never repeat an action with identical args; if evidence already pins the root cause, finish\nwithout probes; if two explanations compete (e.g. dot-product formula vs trig signs underneath),\ndiagnose_gaps first, then decide whether probes are needed.\nReply in strict JSON: {\"thought\": \"...\", \"action\": \"...\", \"args\": {...}}",
+            "user_prompt": "EVIDENCE THIS SESSION:\n- 5u.geo3d.vectors-dot: error [sign-flip] \"u·v = 3 + 0 + 8 = 11.\"\n- 5u.geo3d.vectors-dot: partial \"Then cos θ = -5/(|u||v|) = -5/15 = -1/3, so θ ≈ 109°.\"\n- 5u.geo3d.vectors-basic: correct \"√(1+4+4) = 3. Easy.\"\n- 5u.geo3d.vectors-dot: partial [sign-flip] \"x - 2y + 2z = 0 and y + z = 0... wait, x - 2(-z) + 2z = 0 so x + 4z = 0, x = -4z. So (-4, -1, 1) for z=1.\"\n- 5u.trigplane.applications: partial [ratio-confusion] \"I remember the setup but I got confused last time about whether it's sine or tangent when I have the edge length.\"\n\nSTUDENT MASTERY (touched + weak):\n5u.trig.ratios (Trigonometric ratios) mastery=0.55 conf=0.5 errors=[quadrant-confusion]\n5u.trig.unit-circle (Unit circle and radians) mastery=0.50 conf=0.5 errors=[]\n5u.trigplane.applications (Plane trigonometry problems) mastery=0.66 conf=0.35 errors=[ratio-confusion]\n5u.geo3d.vectors-basic (Vector algebra basics) mastery=0.74 conf=0.6 errors=[]\n5u.geo3d.vectors-dot (Scalar (dot) product) mastery=0.41 conf=0.8 errors=[sign-flip]\n5u.geo3d.lines-3d (Lines in space) mastery=0.50 conf=0.5 errors=[]\n5u.geo3d.planes (Planes in space) mastery=0.40 conf=0.5 errors=[]\n5u.geo3d.distance (Distances in space) mastery=0.35 conf=0.5 errors=[]\n\nOBSERVATIONS SO FAR:\n(none yet)\n\nPROBES GENERATED: 0\nDIAGNOSIS DONE: no"
+          },
+          "response": {
+            "thought": "The evidence points to two connected root issues: in 3D vectors, the student is systematically mishandling signs/components in dot products and line/plane substitutions, while in plane trigonometry they are unsure which ratio links a given side/edge to the angle. The dot-product mistakes are not from vector magnitude basics (those are correct) but from applying the formula with sign carelessness during substitution, which suggests a procedural/sign-tracking gap underneath the low dot-product mastery. The trig note suggests an underlying ratio-selection gap (sine vs tangent/cosine) rather than a pure arithmetic error. Evidence is sufficient to diagnose without probes.",
+            "action": "finish",
+            "args": {
+              "statement": "The main weakness is in 5u.geo3d.vectors-dot: the student knows vector length but repeatedly flips signs when computing dot products and substituting coordinates into vector/plane expressions, so the symptom is not the formula itself but shaky sign-tracking during algebraic substitution. A secondary weakness is in 5u.trigplane.applications and 5u.trig.ratios: the student is unsure which trigonometric ratio matches a given side/edge setup, which points to an underlying ratio-selection gap rather than computation. Confidence is high for the dot-product diagnosis and moderate for the trig ratio diagnosis."
+            }
+          },
+          "llm": true
+        },
+        {
+          "module": "SupervisorAgent",
+          "prompt": {
+            "system_prompt": "You are SupervisorAgent, the coordinator of an autonomous bagrut-math tutoring agent.\nSTANDING GOAL: Bring every student to their target grade by their bagrut exam date, by maintaining an accurate model of what they know, planning their remaining lessons, and correcting your own past assessments as new evidence arrives.\nYou receive an EVENT (session transcript) or a QUESTION — never a command. Decide which specialist\nto dispatch next, based on what is known so far:\n- {\"dispatch\": \"DiagnosisAgent\"} — analyze the transcript: extract evidence, update mastery, find root-cause gaps, maybe generate probes. Required before planning on a transcript event.\n- {\"dispatch\": \"AssessmentAgent\"} — recompute pace vs the exam calendar and the grade forecast; if a prior forecast exists it will self-audit. Requires diagnosis on transcript events.\n- {\"dispatch\": \"PlannerAgent\"} — build or revise the lesson roadmap and write the next-session brief. Requires assessment.\n- {\"dispatch\": \"StudentQueryAgent\"} — answer a question from stored state (question intent only).\n- {\"dispatch\": \"finalize\"} — all work needed for THIS event is done; assemble the response.\nThink about what THIS event actually requires — a clean session may need no probes and only a light\nplan touch; a question needs no diagnosis at all. Do not dispatch an agent twice.\nReply in strict JSON: {\"thought\": \"...\", \"dispatch\": \"...\"}",
+            "user_prompt": "EVENT TYPE: transcript\nSTUDENT: Itai (stu-itai-h11), exam 2026-07-22, target 92\nTRANSCRIPT LENGTH: 1499 chars\nALREADY DISPATCHED: DiagnosisAgent\nARTIFACTS SO FAR:\n- diagnosis: done (0 weak, 0 root causes, probes: 0)\n- mastery updates: 5\n- assessment: no\n- plan: no\n- query answer: no"
+          },
+          "response": {
+            "thought": "Diagnosis is already done for this transcript, and no assessment or plan has been produced yet. The next required step is to recompute pace vs. exam date and forecast based on the updated mastery snapshot.",
+            "dispatch": "AssessmentAgent"
+          },
+          "llm": true
+        },
+        {
+          "module": "AssessmentAgent.CurriculumPacer",
+          "prompt": {
+            "system_prompt": "(deterministic module — no LLM call)",
+            "user_prompt": "exam 2026-07-22, 17 days out, 2 sessions/week assumed"
+          },
+          "response": {
+            "days_to_exam": 17,
+            "sessions_left": 4,
+            "weighted_mastery": 0.73,
+            "expected_mastery_by_now": 0.817,
+            "on_track": false,
+            "at_risk_topics": [
+              {
+                "topic": "vectors",
+                "mastery": 0.48,
+                "weight": 0.08
+              }
+            ]
+          },
+          "llm": false
+        },
+        {
+          "module": "AssessmentAgent.ExamForecaster",
+          "prompt": {
+            "system_prompt": "(deterministic module — no LLM call)",
+            "user_prompt": "topic-weighted forecast for stu-itai-h11 (target 92)"
+          },
+          "response": {
+            "predicted_grade": 66.6,
+            "interval_low": 50.7,
+            "interval_high": 82.6,
+            "lessons_needed": 12,
+            "basis": {
+              "model": "sum over exam topics of weight × expected_score(mastery); expected_score = mastery^1.3",
+              "avg_confidence": 0.29,
+              "weighted_mastery": 0.73,
+              "per_topic": {
+                "algebra": 68.8,
+                "sequences": 68.8,
+                "probability": 68.8,
+                "growth-decay": 68.8,
+                "calculus-1": 70.8,
+                "geometry": 68.8,
+                "trig-plane": 65.4,
+                "analytic-geometry": 68.8,
+                "vectors": 39.1,
+                "complex": 68.8,
+                "calculus-2": 68.8,
+                "trig-3d": 68.8
+              },
+              "target_grade": 92,
+              "as_of": "2026-07-05"
+            }
+          },
+          "llm": false
+        },
+        {
+          "module": "SupervisorAgent",
+          "prompt": {
+            "system_prompt": "You are SupervisorAgent, the coordinator of an autonomous bagrut-math tutoring agent.\nSTANDING GOAL: Bring every student to their target grade by their bagrut exam date, by maintaining an accurate model of what they know, planning their remaining lessons, and correcting your own past assessments as new evidence arrives.\nYou receive an EVENT (session transcript) or a QUESTION — never a command. Decide which specialist\nto dispatch next, based on what is known so far:\n- {\"dispatch\": \"DiagnosisAgent\"} — analyze the transcript: extract evidence, update mastery, find root-cause gaps, maybe generate probes. Required before planning on a transcript event.\n- {\"dispatch\": \"AssessmentAgent\"} — recompute pace vs the exam calendar and the grade forecast; if a prior forecast exists it will self-audit. Requires diagnosis on transcript events.\n- {\"dispatch\": \"PlannerAgent\"} — build or revise the lesson roadmap and write the next-session brief. Requires assessment.\n- {\"dispatch\": \"StudentQueryAgent\"} — answer a question from stored state (question intent only).\n- {\"dispatch\": \"finalize\"} — all work needed for THIS event is done; assemble the response.\nThink about what THIS event actually requires — a clean session may need no probes and only a light\nplan touch; a question needs no diagnosis at all. Do not dispatch an agent twice.\nReply in strict JSON: {\"thought\": \"...\", \"dispatch\": \"...\"}",
+            "user_prompt": "EVENT TYPE: transcript\nSTUDENT: Itai (stu-itai-h11), exam 2026-07-22, target 92\nTRANSCRIPT LENGTH: 1499 chars\nALREADY DISPATCHED: DiagnosisAgent, AssessmentAgent\nARTIFACTS SO FAR:\n- diagnosis: done (0 weak, 0 root causes, probes: 0)\n- mastery updates: 5\n- assessment: done (forecast 66.6, on_track=false)\n- plan: no\n- query answer: no"
+          },
+          "response": {
+            "thought": "Diagnosis and assessment are already complete for this transcript, and there is no existing plan yet. The next required step is to build or revise the lesson roadmap and next-session brief based on the forecast gap to target.",
+            "dispatch": "PlannerAgent"
+          },
+          "llm": true
+        },
+        {
+          "module": "PlannerAgent.PlannerLLM",
+          "prompt": {
+            "system_prompt": "You are PlannerAgent.PlannerLLM of an autonomous bagrut-math tutoring agent —\npersona: a veteran 5-unit tutor building a lesson roadmap. Think step by step about: exam weight of\neach weak topic, prerequisite order (fix foundations before surface skills), sessions actually left,\nand the student's target. If sessions_left cannot cover everything, TRIAGE: drop or thin the\nlowest-weight weak topics and say so explicitly — that trade-off is your decision to own.\nfocus_concepts must contain ONLY concept ids from the CONCEPT IDS list you are given.\nReply in strict JSON:\n{\"roadmap\": [{\"lesson\": 1, \"focus_concepts\": [\"...\"], \"goal\": \"...\"}], \"triage_note\": \"... or null\"}",
+            "user_prompt": "CONCEPT IDS you may use in focus_concepts:\n5u.found.linear-eq, 5u.found.quadratic, 5u.found.factoring, 5u.found.fractions-alg, 5u.found.powers-roots, 5u.found.functions-basic, 5u.found.sign-tracking, 5u.found.inequalities, 5u.trig.ratios, 5u.trig.unit-circle, 5u.trig.identities, 5u.alg.word-problems, 5u.alg.quadratic-param, 5u.alg.factor-quad, 5u.alg.poly, 5u.seq.arithmetic, 5u.seq.geometric, 5u.seq.infinite-geo, 5u.seq.recursive, 5u.seq.mixed, 5u.prob.basic, 5u.prob.cond, 5u.prob.tree, 5u.prob.bernoulli, 5u.growth.exp-model, 5u.growth.percent-change, 5u.calc1.derivative-def, 5u.calc1.derivative-chain, 5u.calc1.tangent, 5u.calc1.extrema, 5u.calc1.function-investigation, 5u.calc1.asymptotes, 5u.calc1.optimization, 5u.calc1.integral-antideriv, 5u.calc1.integral-area, 5u.geo.similarity, 5u.geo.circle, 5u.geo.proof, 5u.trigplane.sine-cosine-law, 5u.trigplane.area, 5u.trigplane.applications, 5u.analytic.line, 5u.analytic.circle, 5u.analytic.parabola, 5u.analytic.ellipse, 5u.analytic.loci, 5u.geo3d.vectors-basic, 5u.geo3d.vectors-dot, 5u.geo3d.lines-3d, 5u.geo3d.planes, 5u.geo3d.distance, 5u.complex.arithmetic, 5u.complex.polar, 5u.calc2.trig-derivatives, 5u.calc2.exp-log, 5u.calc2.investigation, 5u.calc2.integrals, 5u.trig3d.solids\nSTUDENT: Itai (5u), exam 2026-07-22, target 92\nPACE: 17 days / ~4 sessions left; weighted mastery 0.73 vs expected 0.817 (BEHIND)\nAT-RISK TOPICS: vectors@0.48 (weight 0.08)\nFORECAST: 66.6 [50.7–82.6], lessons_needed 12\nDIAGNOSIS: The main weakness is in 5u.geo3d.vectors-dot: the student knows vector length but repeatedly flips signs when computing dot products and substituting coordinates into vector/plane expressions, so the symptom is not the formula itself but shaky sign-tracking during algebraic substitution. A secondary weakness is in 5u.trigplane.applications and 5u.trig.ratios: the student is unsure which trigonometric ratio matches a given side/edge setup, which points to an underlying ratio-selection gap rather than computation. Confidence is high for the dot-product diagnosis and moderate for the trig ratio diagnosis.\nWEAK CONCEPTS: none flagged this session\n\nPlan at most 4 lessons.\nWrite all prose in English."
+          },
+          "response": {
+            "roadmap": [
+              {
+                "lesson": 1,
+                "focus_concepts": [
+                  "5u.geo3d.vectors-dot",
+                  "5u.found.sign-tracking"
+                ],
+                "goal": "Stabilize dot-product work by fixing sign handling in coordinate substitution and vector algebra; drill mixed positive/negative component cases until the setup is automatic."
+              },
+              {
+                "lesson": 2,
+                "focus_concepts": [
+                  "5u.trig.ratios",
+                  "5u.trigplane.applications"
+                ],
+                "goal": "Choose the correct trig ratio from the geometry of the triangle/diagram, then apply it in worded plane-trigonometry problems without mixing up opposite, adjacent, and hypotenuse."
+              },
+              {
+                "lesson": 3,
+                "focus_concepts": [
+                  "5u.geo3d.planes",
+                  "5u.geo3d.distance",
+                  "5u.geo3d.lines-3d"
+                ],
+                "goal": "Extend the vector foundation into 3D geometry tasks that commonly use dot products, plane equations, and distance calculations, with emphasis on careful substitution and interpretation."
+              },
+              {
+                "lesson": 4,
+                "focus_concepts": [
+                  "5u.geo3d.vectors-basic",
+                  "5u.trigplane.sine-cosine-law"
+                ],
+                "goal": "Consolidate core vector and non-right-triangle skills to improve exam coverage on medium-difficulty geometry items that can still yield accessible points."
+              }
+            ],
+            "triage_note": "With only about 4 sessions left versus 12 lessons needed, I am deliberately triaging. I am prioritizing the highest-impact gap: 3D vectors dot products and the sign-tracking behind them, then the trig-ratio/application weakness, then adjacent geometry topics that reuse the same foundations. Lower-weight or less-urgent topics are being thinned rather than covered exhaustively, because reaching the target 92 requires maximizing points from the most diagnostic weaknesses first."
+          },
+          "llm": true
+        },
+        {
+          "module": "PlannerAgent.ExecutorLLM",
+          "prompt": {
+            "system_prompt": "You are PlannerAgent.ExecutorLLM of an autonomous bagrut-math tutoring agent —\npersona: a veteran 5-unit tutor writing the NEXT-SESSION brief for a colleague. Produce a tight,\nactionable brief in markdown with sections:\n1. \"Opening probes\" (if probes are provided — else a 3-minute warm-up tied to last session's errors)\n2. \"Main work\" — the lesson-1 focus with 2–3 concrete exercise types (reference real bagrut-style items)\n3. \"Watch for\" — the student's known error patterns and what to do when they appear\n4. \"Exit check\" — one question that verifies the session goal was met\nKeep it under 350 words, direct, no fluff.\nReply in strict JSON: {\"brief\": \"markdown string\"}",
+            "user_prompt": "LESSON GOAL: Stabilize dot-product work by fixing sign handling in coordinate substitution and vector algebra; drill mixed positive/negative component cases until the setup is automatic.\nFOCUS: 5u.geo3d.vectors-dot (Scalar (dot) product / מכפלה סקלרית), 5u.found.sign-tracking (Sign tracking in long expressions / מעקב סימנים בביטויים ארוכים)\nKNOWN ERROR PATTERNS: sign-flip, ratio-confusion\nOPENING PROBES:\n(none — write a warm-up)\n\nWrite all prose in English."
+          },
+          "response": {
+            "brief": "### 3-minute warm-up\n- Quick mental drill: compute 3 dot products with mixed signs, e.g. \\((2,-3)\\cdot(4,1)\\), \\((-5,2)\\cdot(1,-6)\\), \\((3,-4)\\cdot(-2,-7)\\). Ask student to write the expansion first, then evaluate.\n- Ask: “Which term changes sign when you substitute a negative coordinate?” Have them verbalize the rule before calculating.\n\n### Main work\n1. **Bagrut-style coordinate geometry with dot product**\n   - Example type: given points \\(A,B,C\\), find \\(\\vec{AB}\\cdot\\vec{AC}\\) or check perpendicularity using coordinates.\n   - Focus on forming vectors correctly from coordinates, then doing the scalar product with careful sign tracking.\n\n2. **Mixed positive/negative component vectors**\n   - Example type: compute \\((a,b)\\cdot(c,d)\\) where one or both vectors contain negatives, fractions, or variables.\n   - Require a written setup line before arithmetic: \\(ax+by\\), then substitute, then simplify.\n\n3. **Long-expression sign tracking in vector algebra**\n   - Example type: simplify expressions like \\((\\vec{u}-2\\vec{v})\\cdot(\\vec{u}+\\vec{v})\\) or substitute \\(\\vec{u}=(... ), \\vec{v}=(... )\\) and expand.\n   - Emphasize distributive expansion and bracket discipline to prevent sign loss.\n\n### Watch for\n- **Sign-flip:** student changes a coordinate’s sign incorrectly when forming \\(\\vec{AB}\\) or substituting negatives. Intervene by making them rewrite the vector as “end minus start” and box each coordinate before expanding.\n- **Ratio-confusion:** if they start treating dot-product problems like proportionality/slope tasks, redirect to “multiply coordinates, then add.”\n- If arithmetic errors appear, stop and have them check each product separately before summing.\n\n### Exit check\n- Ask: “Given \\(\\vec{a}=(-2,5)\\) and \\(\\vec{b}=(3,-4)\\), compute \\(\\vec{a}\\cdot\\vec{b}\\) and state whether the vectors are perpendicular.”"
+          },
+          "llm": true
+        },
+        {
+          "module": "SupervisorAgent",
+          "prompt": {
+            "system_prompt": "You are SupervisorAgent, the coordinator of an autonomous bagrut-math tutoring agent.\nSTANDING GOAL: Bring every student to their target grade by their bagrut exam date, by maintaining an accurate model of what they know, planning their remaining lessons, and correcting your own past assessments as new evidence arrives.\nYou receive an EVENT (session transcript) or a QUESTION — never a command. Decide which specialist\nto dispatch next, based on what is known so far:\n- {\"dispatch\": \"DiagnosisAgent\"} — analyze the transcript: extract evidence, update mastery, find root-cause gaps, maybe generate probes. Required before planning on a transcript event.\n- {\"dispatch\": \"AssessmentAgent\"} — recompute pace vs the exam calendar and the grade forecast; if a prior forecast exists it will self-audit. Requires diagnosis on transcript events.\n- {\"dispatch\": \"PlannerAgent\"} — build or revise the lesson roadmap and write the next-session brief. Requires assessment.\n- {\"dispatch\": \"StudentQueryAgent\"} — answer a question from stored state (question intent only).\n- {\"dispatch\": \"finalize\"} — all work needed for THIS event is done; assemble the response.\nThink about what THIS event actually requires — a clean session may need no probes and only a light\nplan touch; a question needs no diagnosis at all. Do not dispatch an agent twice.\nReply in strict JSON: {\"thought\": \"...\", \"dispatch\": \"...\"}",
+            "user_prompt": "EVENT TYPE: transcript\nSTUDENT: Itai (stu-itai-h11), exam 2026-07-22, target 92\nTRANSCRIPT LENGTH: 1499 chars\nALREADY DISPATCHED: DiagnosisAgent, AssessmentAgent, PlannerAgent\nARTIFACTS SO FAR:\n- diagnosis: done (0 weak, 0 root causes, probes: 0)\n- mastery updates: 5\n- assessment: done (forecast 66.6, on_track=false)\n- plan: done (4 lessons, replanned/triaged)\n- query answer: no"
+          },
+          "response": {
+            "thought": "This transcript event has already been processed through diagnosis, assessment, and planning, and the available artifacts indicate the work for this event is complete. No additional specialist dispatch is needed unless there were unanswered questions, which there are not.",
+            "dispatch": "finalize"
+          },
+          "llm": true
+        },
+        {
+          "module": "ResponseComposer",
+          "prompt": {
+            "system_prompt": "(deterministic module — no LLM call)",
+            "user_prompt": "assemble final response from artifacts"
+          },
+          "response": {
+            "sections": [
+              "language",
+              "student",
+              "analysis",
+              "masteryChanges",
+              "diagnosis",
+              "pace",
+              "forecast",
+              "roadmap",
+              "replanRationale",
+              "brief"
+            ]
+          },
+          "llm": false
+        },
+        {
+          "module": "ReflectionAgent",
+          "prompt": {
+            "system_prompt": "You are ReflectionAgent, the quality gate of an autonomous bagrut-math tutoring agent.\nCritique the draft response against these checks:\n1. Does it address the diagnosed root cause (not just the surface errors)?\n2. Are difficulty and scope calibrated to the student's mastery and the sessions left?\n3. Are all numbers consistent (forecast, lessons, dates)?\n4. Is the tone right for a professional tutor-facing brief — direct, concrete, no filler?\nIf ALL checks pass, return {\"pass\": true, \"issues\": [], \"revised\": null}.\nIf not, return {\"pass\": false, \"issues\": [\"...\"], \"revised\": \"the corrected full response\"} —\nchange ONLY what the issues require, keep the structure.\nReply in strict JSON.",
+            "user_prompt": "CONTEXT:\nstudent: Itai, target 92, exam 2026-07-22; weak: n/a; root causes: n/a; forecast 66.6, on_track=false, sessions_left=4\n\nDRAFT RESPONSE:\n## Session summary\nVectors session: the student corrected a dot-product sign error with prompting, computed a vector magnitude correctly, solved a perpendicular-vector system successfully after a minor sign check, and showed partial conceptual understanding of angle setup in a 3D pyramid but confusion about trig ratios/signs in quadrants.\n\n## Mastery updates\n- `5u.geo3d.vectors-dot`: 0.45 → **0.293**\n- `5u.geo3d.vectors-dot`: 0.293 → **0.365**\n- `5u.geo3d.vectors-basic`: 0.6 → **0.74**\n- `5u.geo3d.vectors-dot`: 0.365 → **0.412**\n- `5u.trigplane.applications`: 0.75 → **0.663**\n\n## Diagnosis\nThe main weakness is in 5u.geo3d.vectors-dot: the student knows vector length but repeatedly flips signs when computing dot products and substituting coordinates into vector/plane expressions, so the symptom is not the formula itself but shaky sign-tracking during algebraic substitution. A secondary weakness is in 5u.trigplane.applications and 5u.trig.ratios: the student is unsure which trigonometric ratio matches a given side/edge setup, which points to an underlying ratio-selection gap rather than computation. Confidence is high for the dot-product diagnosis and moderate for the trig ratio diagnosis.\n\n## Pace & forecast\n- Days to exam: **17** (~4 sessions)\n- Weighted mastery: **0.73** vs expected 0.817 → **behind**\n- Grade forecast: **66.6** [50.7–82.6] · lessons needed to target: **12**\n\n## Roadmap\n1. [`5u.geo3d.vectors-dot`, `5u.found.sign-tracking`] — Stabilize dot-product work by fixing sign handling in coordinate substitution and vector algebra; drill mixed positive/negative component cases until the setup is automatic.\n2. [`5u.trig.ratios`, `5u.trigplane.applications`] — Choose the correct trig ratio from the geometry of the triangle/diagram, then apply it in worded plane-trigonometry problems without mixing up opposite, adjacent, and hypotenuse.\n3. [`5u.geo3d.planes`, `5u.geo3d.distance`, `5u.geo3d.lines-3d`] — Extend the vector foundation into 3D geometry tasks that commonly use dot products, plane equations, and distance calculations, with emphasis on careful substitution and interpretation.\n4. [`5u.geo3d.vectors-basic`, `5u.trigplane.sine-cosine-law`] — Consolidate core vector and non-right-triangle skills to improve exam coverage on medium-difficulty geometry items that can still yield accessible points.\n\n> Replan/triage: With only about 4 sessions left versus 12 lessons needed, I am deliberately triaging. I am prioritizing the highest-impact gap: 3D vectors dot products and the sign-tracking behind them, then the trig-ratio/application weakness, then adjacent geometry topics that reuse the same foundations. Lower-weight or less-urgent topics are being thinned rather than covered exhaustively, because reaching the target 92 requires maximizing points from the most diagnostic weaknesses first.\n\n## Next-session brief\n### 3-minute warm-up\n- Quick mental drill: compute 3 dot products with mixed signs, e.g. \\((2,-3)\\cdot(4,1)\\), \\((-5,2)\\cdot(1,-6)\\), \\((3,-4)\\cdot(-2,-7)\\). Ask student to write the expansion first, then evaluate.\n- Ask: “Which term changes sign when you substitute a negative coordinate?” Have them verbalize the rule before calculating.\n\n### Main work\n1. **Bagrut-style coordinate geometry with dot product**\n   - Example type: given points \\(A,B,C\\), find \\(\\vec{AB}\\cdot\\vec{AC}\\) or check perpendicularity using coordinates.\n   - Focus on forming vectors correctly from coordinates, then doing the scalar product with careful sign tracking.\n\n2. **Mixed positive/negative component vectors**\n   - Example type: compute \\((a,b)\\cdot(c,d)\\) where one or both vectors contain negatives, fractions, or variables.\n   - Require a written setup line before arithmetic: \\(ax+by\\), then substitute, then simplify.\n\n3. **Long-expression sign tracking in vector algebra**\n   - Example type: simpl …[truncated]"
+          },
+          "response": {
+            "pass": false,
+            "issues": [
+              "The diagnosis does not fully reflect the stated root cause framework: the prompt says root causes are n/a, so the response should avoid over-asserting a deeper diagnosis beyond the observed sign-tracking and trig-ratio issues. It should keep the brief grounded in session evidence rather than presenting a stronger causal claim than the context supports.",
+              "The scope is too broad for 4 sessions left and a 66.6 forecast. The roadmap includes too many topics (planes, distance, lines, sine-cosine law) instead of tightly triaging to the highest-impact gaps.",
+              "The numbers are inconsistent with the context and with each other: the forecast is 66.6 and on_track=false, but the response adds a wide confidence band, “lessons needed to target: 12,” and an expected weighted mastery of 0.817 without showing how these were derived from the provided forecast. The “Days to exam: 17 (~4 sessions)” is also imprecise given the exam date context; it should stay aligned with the four sessions left rather than introduce new unsupported session math.",
+              "The tone is mostly appropriate, but the brief is longer and more elaborate than needed for a professional tutor-facing note. It should be tighter and more direct, with fewer redundant explanations."
+            ]
+          },
+          "llm": true
+        }
+      ]
+    },
+    {
+      "prompt": "How is Itai doing? Will he reach his target by the exam?",
+      "full_response": "Itai’s current status is **not yet determined from the provided data**. The context does not include a forecast, on-track flag, sessions left, weak areas, or root-cause analysis, so I can’t reliably judge whether he is on track for 92 by the exam.\n\n### Known facts\n- **Target:** 92\n- **Exam date:** 2026-07-22\n- **Latest update:** 2026-07-05\n\n### What can be concluded\n- There is **not enough information** here to assess current performance against target.\n- I should not infer weak topics, forecast score, or required lessons without supporting data.\n\n### Next step\n- Provide the forecast, on-track status, sessions left, and weak/root-cause fields so I can give a proper progress brief.\n\nIf you want, I can also help turn the missing data into a concise tutor-facing status update once it’s available.",
+      "steps": [
+        {
+          "module": "IntentRouter",
+          "prompt": {
+            "system_prompt": "You are IntentRouter of an autonomous bagrut-math tutoring agent.\nClassify the user's input:\n- \"transcript\": a tutoring-session transcript (dialogue/notes of a real session) to be processed\n- \"question\": a question about a student's progress, forecast, plan, or what to do next with them\n- \"out_of_scope\": anything else (solve-my-homework requests, non-tutoring topics, other subjects)\nAlso extract student_ref: the student's name or id if one is mentioned (from a \"Student:\" header,\nthe dialogue, or the question), else null.\n\nExamples:\nInput: \"Student: Itai\\nTutor: let's compute u·v... Itai: 3+0+8=11...\" → {\"intent\": \"transcript\", \"student_ref\": \"Itai\", \"reason\": \"session dialogue with math work\"}\nInput: \"How is Noa doing? Will she hit her target?\" → {\"intent\": \"question\", \"student_ref\": \"Noa\", \"reason\": \"asks about stored student state\"}\nInput: \"מה שלום דנה? כמה שיעורים נשארו לה?\" → {\"intent\": \"question\", \"student_ref\": \"דנה\", \"reason\": \"Hebrew question about a student's plan\"}\nInput: \"Solve x^2-5x+6=0 for me\" → {\"intent\": \"out_of_scope\", \"student_ref\": null, \"reason\": \"homework solving, not tutoring telemetry\"}\nInput: \"What's the best pizza in Haifa?\" → {\"intent\": \"out_of_scope\", \"student_ref\": null, \"reason\": \"unrelated to tutoring\"}\n\nReply in strict JSON: {\"intent\": \"...\", \"student_ref\": \"... or null\", \"reason\": \"...\"}",
+            "user_prompt": "INPUT:\nHow is Itai doing? Will he reach his target by the exam?"
+          },
+          "response": {
+            "intent": "question",
+            "student_ref": "Itai",
+            "reason": "asks about a student's progress and forecast toward an exam target"
+          },
+          "llm": true
+        },
+        {
+          "module": "SupervisorAgent",
+          "prompt": {
+            "system_prompt": "You are SupervisorAgent, the coordinator of an autonomous bagrut-math tutoring agent.\nSTANDING GOAL: Bring every student to their target grade by their bagrut exam date, by maintaining an accurate model of what they know, planning their remaining lessons, and correcting your own past assessments as new evidence arrives.\nYou receive an EVENT (session transcript) or a QUESTION — never a command. Decide which specialist\nto dispatch next, based on what is known so far:\n- {\"dispatch\": \"DiagnosisAgent\"} — analyze the transcript: extract evidence, update mastery, find root-cause gaps, maybe generate probes. Required before planning on a transcript event.\n- {\"dispatch\": \"AssessmentAgent\"} — recompute pace vs the exam calendar and the grade forecast; if a prior forecast exists it will self-audit. Requires diagnosis on transcript events.\n- {\"dispatch\": \"PlannerAgent\"} — build or revise the lesson roadmap and write the next-session brief. Requires assessment.\n- {\"dispatch\": \"StudentQueryAgent\"} — answer a question from stored state (question intent only).\n- {\"dispatch\": \"finalize\"} — all work needed for THIS event is done; assemble the response.\nThink about what THIS event actually requires — a clean session may need no probes and only a light\nplan touch; a question needs no diagnosis at all. Do not dispatch an agent twice.\nReply in strict JSON: {\"thought\": \"...\", \"dispatch\": \"...\"}",
+            "user_prompt": "EVENT TYPE: question\nSTUDENT: Itai (stu-itai-h11), exam 2026-07-22, target 92\nQUESTION: How is Itai doing? Will he reach his target by the exam?\nALREADY DISPATCHED: none\nARTIFACTS SO FAR:\n- diagnosis: no\n- mastery updates: no\n- assessment: no\n- plan: no\n- query answer: no"
+          },
+          "response": {
+            "thought": "This is a student status question, not a transcript event. We should answer from stored state, but there is no existing diagnosis/assessment data yet, so the query agent is the right next step to produce a cautious, state-based answer.",
+            "dispatch": "StudentQueryAgent"
+          },
+          "llm": true
+        },
+        {
+          "module": "StudentQueryAgent",
+          "prompt": {
+            "system_prompt": "You are StudentQueryAgent of an autonomous bagrut-math tutoring agent — persona: a\nveteran 5-unit tutor answering a colleague's question about a student, strictly from the agent's\nstored state (mastery, forecast, plan). Quantify: cite mastery values, the forecast interval and\nwhat drives it. State uncertainty honestly (low-confidence estimates, thin evidence). If the\nquestion asks for something outside the stored state, say what you'd need to know it.\nReply in strict JSON: {\"answer\": \"markdown string\"}",
+            "user_prompt": "QUESTION: How is Itai doing? Will he reach his target by the exam?\n\nSTUDENT: Itai, exam 2026-07-22, target 92\nWEAKEST CONCEPTS:\n5u.geo3d.distance (Distances in space): mastery 0.35, confidence 0.5, errors []\n5u.geo3d.planes (Planes in space): mastery 0.40, confidence 0.5, errors []\n5u.geo3d.vectors-dot (Scalar (dot) product): mastery 0.41, confidence 0.8, errors [sign-flip]\n5u.trig.unit-circle (Unit circle and radians): mastery 0.50, confidence 0.5, errors []\n5u.geo3d.lines-3d (Lines in space): mastery 0.50, confidence 0.5, errors []\n5u.trig.ratios (Trigonometric ratios): mastery 0.55, confidence 0.5, errors [quadrant-confusion]\n5u.trigplane.applications (Plane trigonometry problems): mastery 0.66, confidence 0.35, errors [ratio-confusion]\n5u.geo3d.vectors-basic (Vector algebra basics): mastery 0.74, confidence 0.6, errors []\nLATEST FORECAST: 66.6 [50.7–82.6], lessons_needed 12 (as of 2026-07-05T06:00:45.335472+00:00)\nACTIVE PLAN: L1: Stabilize dot-product work by fixing sign handling in coordinate substitution and vector algebra; drill mixed positive/negative component cases until the setup is automatic.; L2: Choose the correct trig ratio from the geometry of the triangle/diagram, then apply it in worded plane-trigonometry problems without mixing up opposite, adjacent, and hypotenuse.; L3: Extend the vector foundation into 3D geometry tasks that commonly use dot products, plane equations, and distance calculations, with emphasis on careful substitution and interpretation.; L4: Consolidate core vector and non-right-triangle skills to improve exam coverage on medium-difficulty geometry items that can still yield accessible points.\n\nAnswer in English."
+          },
+          "response": {
+            "answer": "Itai is **currently below target** and, based on the latest forecast, is **unlikely to reach 92 by the exam** unless progress accelerates a lot.\n\n### Where he stands now\n- **Target:** 92\n- **Forecast score:** **66.6**\n- **Forecast interval:** **50.7–82.6**\n- **Exam date:** 2026-07-22\n- **Latest update:** 2026-07-05\n- **Lessons needed:** **12**\n\n### What’s driving the forecast\nThe forecast is being pulled down mainly by the weakest geometry/trig areas:\n- **Distances in space:** mastery **0.35** (confidence 0.5)\n- **Planes in space:** mastery **0.40** (confidence 0.5)\n- **Scalar product:** mastery **0.41** (confidence 0.8), with **sign-flip** errors\n- **Unit circle and radians:** mastery **0.50** (confidence 0.5)\n- **Lines in space:** mastery **0.50** (confidence 0.5)\n- **Trigonometric ratios:** mastery **0.55** (confidence 0.5), with **quadrant-confusion** errors\n\nThere is some strength to build on:\n- **Vector basics:** mastery **0.74**\n- **Plane trig applications:** mastery **0.66**, but confidence is only **0.35**, so this evidence is thin\n\n### Bottom line\n- **Chance of hitting 92 by the exam: low** from the current state.\n- The forecast interval topping out at **82.6** suggests that even the optimistic estimate is still well short of target.\n- The current plan is sensible: it focuses first on **dot-product sign handling**, then **trig ratio selection**, then broader **3D geometry** skills.\n\n### Uncertainty\nConfidence is **moderate, not high**:\n- Several weak areas have only **0.5 confidence**.\n- One key skill, plane trig applications, has **very thin evidence** (confidence **0.35**).\n- So the exact score is uncertain, but the direction is clear: **he is not yet on track for 92**.\n\nIf you want, I can also summarize **which 2–3 topics are most likely to raise his forecast fastest** based on the current plan."
+          },
+          "llm": true
+        },
+        {
+          "module": "SupervisorAgent",
+          "prompt": {
+            "system_prompt": "You are SupervisorAgent, the coordinator of an autonomous bagrut-math tutoring agent.\nSTANDING GOAL: Bring every student to their target grade by their bagrut exam date, by maintaining an accurate model of what they know, planning their remaining lessons, and correcting your own past assessments as new evidence arrives.\nYou receive an EVENT (session transcript) or a QUESTION — never a command. Decide which specialist\nto dispatch next, based on what is known so far:\n- {\"dispatch\": \"DiagnosisAgent\"} — analyze the transcript: extract evidence, update mastery, find root-cause gaps, maybe generate probes. Required before planning on a transcript event.\n- {\"dispatch\": \"AssessmentAgent\"} — recompute pace vs the exam calendar and the grade forecast; if a prior forecast exists it will self-audit. Requires diagnosis on transcript events.\n- {\"dispatch\": \"PlannerAgent\"} — build or revise the lesson roadmap and write the next-session brief. Requires assessment.\n- {\"dispatch\": \"StudentQueryAgent\"} — answer a question from stored state (question intent only).\n- {\"dispatch\": \"finalize\"} — all work needed for THIS event is done; assemble the response.\nThink about what THIS event actually requires — a clean session may need no probes and only a light\nplan touch; a question needs no diagnosis at all. Do not dispatch an agent twice.\nReply in strict JSON: {\"thought\": \"...\", \"dispatch\": \"...\"}",
+            "user_prompt": "EVENT TYPE: question\nSTUDENT: Itai (stu-itai-h11), exam 2026-07-22, target 92\nQUESTION: How is Itai doing? Will he reach his target by the exam?\nALREADY DISPATCHED: StudentQueryAgent\nARTIFACTS SO FAR:\n- diagnosis: no\n- mastery updates: no\n- assessment: no\n- plan: no\n- query answer: done"
+          },
+          "response": {
+            "thought": "This is a question event and the StudentQueryAgent has already been dispatched and completed. No further specialist work is needed for this event, so finalize with the available state.",
+            "dispatch": "finalize"
+          },
+          "llm": true
+        },
+        {
+          "module": "ResponseComposer",
+          "prompt": {
+            "system_prompt": "(deterministic module — no LLM call)",
+            "user_prompt": "assemble final response from artifacts"
+          },
+          "response": {
+            "sections": [
+              "language",
+              "student",
+              "queryAnswer"
+            ]
+          },
+          "llm": false
+        },
+        {
+          "module": "ReflectionAgent",
+          "prompt": {
+            "system_prompt": "You are ReflectionAgent, the quality gate of an autonomous bagrut-math tutoring agent.\nCritique the draft response against these checks:\n1. Does it address the diagnosed root cause (not just the surface errors)?\n2. Are difficulty and scope calibrated to the student's mastery and the sessions left?\n3. Are all numbers consistent (forecast, lessons, dates)?\n4. Is the tone right for a professional tutor-facing brief — direct, concrete, no filler?\nIf ALL checks pass, return {\"pass\": true, \"issues\": [], \"revised\": null}.\nIf not, return {\"pass\": false, \"issues\": [\"...\"], \"revised\": \"the corrected full response\"} —\nchange ONLY what the issues require, keep the structure.\nReply in strict JSON.",
+            "user_prompt": "CONTEXT:\nstudent: Itai, target 92, exam 2026-07-22; weak: n/a; root causes: n/a; forecast n/a, on_track=n/a, sessions_left=n/a\n\nDRAFT RESPONSE:\nItai is **currently below target** and, based on the latest forecast, is **unlikely to reach 92 by the exam** unless progress accelerates a lot.\n\n### Where he stands now\n- **Target:** 92\n- **Forecast score:** **66.6**\n- **Forecast interval:** **50.7–82.6**\n- **Exam date:** 2026-07-22\n- **Latest update:** 2026-07-05\n- **Lessons needed:** **12**\n\n### What’s driving the forecast\nThe forecast is being pulled down mainly by the weakest geometry/trig areas:\n- **Distances in space:** mastery **0.35** (confidence 0.5)\n- **Planes in space:** mastery **0.40** (confidence 0.5)\n- **Scalar product:** mastery **0.41** (confidence 0.8), with **sign-flip** errors\n- **Unit circle and radians:** mastery **0.50** (confidence 0.5)\n- **Lines in space:** mastery **0.50** (confidence 0.5)\n- **Trigonometric ratios:** mastery **0.55** (confidence 0.5), with **quadrant-confusion** errors\n\nThere is some strength to build on:\n- **Vector basics:** mastery **0.74**\n- **Plane trig applications:** mastery **0.66**, but confidence is only **0.35**, so this evidence is thin\n\n### Bottom line\n- **Chance of hitting 92 by the exam: low** from the current state.\n- The forecast interval topping out at **82.6** suggests that even the optimistic estimate is still well short of target.\n- The current plan is sensible: it focuses first on **dot-product sign handling**, then **trig ratio selection**, then broader **3D geometry** skills.\n\n### Uncertainty\nConfidence is **moderate, not high**:\n- Several weak areas have only **0.5 confidence**.\n- One key skill, plane trig applications, has **very thin evidence** (confidence **0.35**).\n- So the exact score is uncertain, but the direction is clear: **he is not yet on track for 92**.\n\nIf you want, I can also summarize **which 2–3 topics are most likely to raise his forecast fastest** based on the current plan."
+          },
+          "response": {
+            "pass": false,
+            "issues": [
+              "The draft uses forecast, interval, and lessons-needed numbers even though the context says forecast n/a and sessions_left n/a; those values are unsupported and should not be asserted.",
+              "It states a diagnosis about weak geometry/trig areas and specific error types, but the context says weak/root causes are n/a; the response should not invent root causes or mastery details.",
+              "The brief should be calibrated to the available information: with no forecast or sessions_left provided, it should give a neutral status update rather than a low-probability prediction."
+            ]
+          },
+          "llm": true
+        }
+      ]
     }
   ]
 }

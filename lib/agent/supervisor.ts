@@ -20,7 +20,9 @@ to dispatch next, based on what is known so far:
 - {"dispatch": "StudentQueryAgent"} — answer a question from stored state (question intent only).
 - {"dispatch": "finalize"} — all work needed for THIS event is done; assemble the response.
 Think about what THIS event actually requires — a clean session may need no probes and only a light
-plan touch; a question needs no diagnosis at all. Do not dispatch an agent twice.
+plan touch; a question needs no diagnosis at all. If the diagnosis surfaced NO weak concepts AND the
+pace report says on_track, do NOT dispatch PlannerAgent — the active roadmap stands; finalize and say
+so. Do not dispatch an agent twice.
 Reply in strict JSON: {"thought": "...", "dispatch": "..."}`;
 
 export interface SupervisorDeps {

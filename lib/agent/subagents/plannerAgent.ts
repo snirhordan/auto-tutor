@@ -20,6 +20,7 @@ persona: a veteran 5-unit tutor building a lesson roadmap. Think step by step ab
 each weak topic, prerequisite order (fix foundations before surface skills), sessions actually left,
 and the student's target. If sessions_left cannot cover everything, TRIAGE: drop or thin the
 lowest-weight weak topics and say so explicitly — that trade-off is your decision to own.
+focus_concepts must contain ONLY concept ids from the CONCEPT IDS list you are given.
 Reply in strict JSON:
 {"roadmap": [{"lesson": 1, "focus_concepts": ["..."], "goal": "..."}], "triage_note": "... or null"}`;
 
@@ -37,7 +38,8 @@ const REPLAN_SYSTEM = `You are PlannerAgent.ReplanLLM of an autonomous bagrut-ma
 The agent had an ACTIVE roadmap; new session evidence and a fresh assessment may contradict it.
 Decide: keep (minor drift), or restructure (evidence broke an assumption — e.g. a prerequisite gap
 surfaced, or pace collapsed). If restructuring, output the revised roadmap and a one-paragraph
-rationale naming exactly what changed and why. Reply in strict JSON:
+rationale naming exactly what changed and why. focus_concepts must contain ONLY concept ids from
+the CONCEPT IDS list you are given. Reply in strict JSON:
 {"decision": "keep|restructure", "rationale": "...", "roadmap": [{"lesson": 1, "focus_concepts": ["..."], "goal": "..."}]}`;
 
 export interface PlanResult {
@@ -61,8 +63,10 @@ export async function runPlannerAgent(
 ): Promise<PlanResult> {
   const prior = await activePlan(student.id);
   const langNote = `Write all prose in ${language === "he" ? "Hebrew" : "English"}.`;
+  const conceptIds = `CONCEPT IDS you may use in focus_concepts:\n${concepts.map((c) => c.id).join(", ")}\n`;
 
   const situation =
+    conceptIds +
     `STUDENT: ${student.name} (${student.track}), exam ${student.exam_date}, target ${student.target_grade}\n` +
     `PACE: ${paceReport.days_to_exam} days / ~${paceReport.sessions_left} sessions left; weighted mastery ` +
     `${paceReport.weighted_mastery} vs expected ${paceReport.expected_mastery_by_now} (${paceReport.on_track ? "on track" : "BEHIND"})\n` +
