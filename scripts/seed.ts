@@ -1,6 +1,7 @@
 // Seed Supabase with the curated concept graph + demo students + baseline mastery.
 // Usage: npx tsx scripts/seed.ts            (requires .env)
-//        npx tsx scripts/seed.ts --reset    (also clears sessions/forecasts/plans/usage)
+//        npx tsx scripts/seed.ts --reset    (also clears sessions/forecasts/plans/usage/students,
+//                                             including any onboarded during test runs)
 import "dotenv/config";
 import fs from "fs";
 import path from "path";
@@ -37,6 +38,14 @@ async function main() {
       const { error } = await db.from(t).delete().neq(t === "llm_usage" ? "id" : "student_id", t === "llm_usage" ? -1 : "");
       if (error) throw new Error(`reset ${t}: ${error.message}`);
       console.log(`cleared ${t}`);
+    }
+    // Every mastery/sessions/forecasts/plans row referencing a student is already gone above
+    // (FK order), so students itself can now be wiped clean — this also removes any students
+    // the StudentOnboarder created during test runs.
+    {
+      const { error } = await db.from("students").delete().neq("id", "");
+      if (error) throw new Error(`reset students: ${error.message}`);
+      console.log("cleared students");
     }
   }
 

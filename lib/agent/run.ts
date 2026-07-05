@@ -2,13 +2,28 @@
 // Flow: IntentRouter → SupervisorAgent (dispatches specialists) → code assembly
 // → ReflectionAgent quality gate. Every LLM call and deterministic module is traced.
 import { randomUUID } from "crypto";
-import { MAX_LLM_CALLS_PER_RUN } from "../config";
+import {
+  DEFAULT_TARGET_GRADE,
+  MAX_LLM_CALLS_PER_RUN,
+  MAX_REFLECTION_FIX_ROUNDS,
+  MIN_ONBOARD_RUNWAY_DAYS,
+  nextExamDate,
+} from "../config";
 import type { RunArtifacts, Step } from "./types";
 import { Trace } from "./types";
 import { detectLanguage, routeIntent } from "./intentRouter";
-import { runSupervisor } from "./supervisor";
+import { runSupervisor, runSupervisorFixRound } from "./supervisor";
+import type { SupervisorDeps } from "./supervisor";
 import { runReflectionAgent } from "./subagents/reflectionAgent";
-import { findStudent, listStudents, loadConcepts, loadEdges, loadMastery, saveSession } from "./state";
+import {
+  createStudent,
+  findStudent,
+  listStudents,
+  loadConcepts,
+  loadEdges,
+  loadMastery,
+  saveSession,
+} from "./state";
 
 export interface ExecuteResult {
   response: string;
@@ -34,7 +49,36 @@ export async function executeAgent(prompt: string): Promise<ExecuteResult> {
   }
 
   // 2) Resolve the student (code, not LLM).
-  const student = routed.student_ref ? await findStudent(routed.student_ref) : null;
+  let student = routed.student_ref ? await findStudent(routed.student_ref) : null;
+
+  // StudentOnboarder: an unknown student named in a TRANSCRIPT is a real event we should
+  // handle, not a dead end — create a profile with stated assumptions and keep going.
+  // (Questions about an unknown student, and transcripts with no student_ref at all, still
+  // fall through to the clarification below — we only onboard off telemetry, never a guess.)
+  if (!student && routed.intent === "transcript" && routed.student_ref) {
+    const examDate = nextExamDate(now);
+    const created = await createStudent(routed.student_ref, examDate, DEFAULT_TARGET_GRADE);
+    trace.addCode(
+      "StudentOnboarder",
+      `unknown student "${routed.student_ref}" named in a transcript — no matching profile. ` +
+        `Assuming exam date ${examDate} (next sitting at least ${MIN_ONBOARD_RUNWAY_DAYS} days out) and target grade ` +
+        `${DEFAULT_TARGET_GRADE} (course default) since the tutor stated neither; seeding every ` +
+        `concept at 0.5 mastery / 0.2 confidence / 0 evidence (no prior sessions).`,
+      {
+        student_id: created.id,
+        exam_date: created.exam_date,
+        target_grade: created.target_grade,
+        priors: "all concepts 0.5 mastery / 0.2 confidence",
+      },
+    );
+    artifacts.onboarded = {
+      name: created.name,
+      exam_date: created.exam_date,
+      target_grade: created.target_grade,
+    };
+    student = created;
+  }
+
   if (!student) {
     const known = (await listStudents()).map((s) => `${s.name} (${s.id})`).join(", ");
     const ask =
@@ -55,20 +99,16 @@ export async function executeAgent(prompt: string): Promise<ExecuteResult> {
   ]);
   artifacts.student = student;
 
-  await runSupervisor(
-    trace,
-    routed.intent,
-    {
-      student,
-      masteryRows,
-      concepts,
-      edges,
-      transcript: routed.intent === "transcript" ? prompt : undefined,
-      question: routed.intent === "question" ? prompt : undefined,
-      now,
-    },
-    artifacts,
-  );
+  const deps: SupervisorDeps = {
+    student,
+    masteryRows,
+    concepts,
+    edges,
+    transcript: routed.intent === "transcript" ? prompt : undefined,
+    question: routed.intent === "question" ? prompt : undefined,
+    now,
+  };
+  await runSupervisor(trace, routed.intent, deps, artifacts);
 
   // Question-Refinement path: the agent asks instead of guessing.
   if (artifacts.clarification) {
@@ -83,12 +123,55 @@ export async function executeAgent(prompt: string): Promise<ExecuteResult> {
     await saveSession(student.id, prompt, artifacts.analysis.session_summary, artifacts.analysis.evidence);
   }
 
-  // 5) Assemble the response (code) and run the Reflection quality gate (LLM).
-  const draft = compose(artifacts);
+  // 5) Assemble the response (code), then run the Reflection quality gate (LLM). A failing
+  // verdict routes back to the Supervisor for a bounded number of fix rounds before we ship
+  // best-effort — see MAX_REFLECTION_FIX_ROUNDS.
+  let draft = compose(artifacts);
   trace.addCode("ResponseComposer", "assemble final response from artifacts", {
     sections: Object.keys(artifacts).filter((k) => artifacts[k as keyof RunArtifacts] != null),
   });
-  const final = await runReflectionAgent(trace, draft, contextSummary(artifacts));
+
+  let final: string;
+  for (let round = 0; ; round++) {
+    const verdict = await runReflectionAgent(trace, draft, contextSummary(artifacts));
+    if (verdict.pass) {
+      final = draft;
+      break;
+    }
+    if (round >= MAX_REFLECTION_FIX_ROUNDS || !trace.hasBudget(3)) {
+      final = verdict.revised ?? draft; // best-effort ship
+      break;
+    }
+    const beforeFix = draft;
+    await runSupervisorFixRound(trace, routed.intent, deps, artifacts, verdict.issues);
+
+    // A fix round can itself decide the transcript is too ambiguous to proceed (e.g. it
+    // redispatches DiagnosisAgent, which comes back asking a clarifying question instead of
+    // a diagnosis) — honor that the same way the initial dispatch's clarification is honored,
+    // instead of falling through to compose() on stale, unconfirmed artifacts.
+    if (artifacts.clarification) {
+      trace.addCode(
+        "ResponseComposer",
+        "assemble clarification (incomplete transcript, reflection fix round)",
+        { clarification: true },
+      );
+      return { response: artifacts.clarification, steps: trace.steps };
+    }
+
+    draft = compose(artifacts);
+    trace.addCode("ResponseComposer", `recompose after reflection fix round ${round + 1}`, {
+      sections: Object.keys(artifacts).filter((k) => artifacts[k as keyof RunArtifacts] != null),
+    });
+
+    if (draft === beforeFix) {
+      // The fix round changed nothing (Supervisor finalized immediately, or every candidate
+      // dispatch was a guarded no-op given current artifacts) — re-running ReflectionAgent
+      // would just re-score identical text for another LLM call. Ship the reflector's own
+      // correction now instead of burning the budget on a repeat verdict.
+      final = verdict.revised ?? draft;
+      break;
+    }
+  }
   return { response: final, steps: trace.steps };
 }
 
@@ -99,6 +182,20 @@ function compose(a: RunArtifacts): string {
   const s: string[] = [];
   const he = a.language === "he";
 
+  if (a.onboarded) {
+    const o = a.onboarded;
+    s.push(
+      he
+        ? `## תלמיד/ה חדש/ה נוסף/ה למערכת: ${o.name}\n` +
+          `הונח תאריך בחינה: **${o.exam_date}**; יעד ציון מונח: **${o.target_grade}**.\n` +
+          `אין נתונים קודמים — כל מושג מתחיל ב-0.5 שליטה עם ביטחון נמוך.\n` +
+          `אפשר לתקן את תאריך הבחינה או את יעד הציון פשוט על ידי מענה כאן.`
+        : `## New student onboarded: ${o.name}\n` +
+          `Assumed exam date: **${o.exam_date}**; assumed target grade: **${o.target_grade}**.\n` +
+          `No prior data — every concept starts at 0.5 mastery with low confidence.\n` +
+          `You can correct the exam date or target grade just by replying.`,
+    );
+  }
   if (a.analysis) {
     s.push(`## ${he ? "סיכום המפגש" : "Session summary"}\n${a.analysis.session_summary}`);
   }
@@ -160,11 +257,24 @@ function contextSummary(a: RunArtifacts): string {
       `figures on the grounds that they are missing from this context line.`
     );
   }
+  // Clean, on-track session: the Supervisor deliberately kept the existing roadmap.
+  // Without this note the reflector fails the draft for "missing" a plan/brief and
+  // its fix round un-does the clean-session behavior by dispatching the planner.
+  const cleanSession =
+    a.diagnosis !== undefined &&
+    a.diagnosis.weak_concepts.length === 0 &&
+    a.pace?.on_track === true &&
+    !a.roadmap;
   return (
     `student: ${a.student?.name}, target ${a.student?.target_grade}, exam ${a.student?.exam_date}; ` +
     `weak: ${a.diagnosis?.weak_concepts.map((w) => w.concept_id).join(", ") || "n/a"}; ` +
     `root causes: ${a.diagnosis?.root_causes.map((r) => r.concept_id).join(", ") || "n/a"}; ` +
     `forecast ${a.forecast?.predicted_grade ?? "n/a"}, on_track=${a.pace?.on_track ?? "n/a"}, ` +
-    `sessions_left=${a.pace?.sessions_left ?? "n/a"}`
+    `sessions_left=${a.pace?.sessions_left ?? "n/a"}` +
+    (cleanSession
+      ? ". NOTE: clean, on-track session — the Supervisor deliberately kept the existing " +
+        "roadmap; the draft is NOT supposed to contain a new plan or session brief. Judge it " +
+        "as a session log + confirmation, and do not fail it for lacking planning sections."
+      : "")
   );
 }

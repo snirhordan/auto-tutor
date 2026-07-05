@@ -24,7 +24,13 @@ question about a student), and the agent decides on its own what the event requi
   (**ForecastAuditor** — Reflection over the agent's own prior output),
 - build or **restructure** the remaining lesson roadmap + write a next-session brief
   (**PlannerAgent** — Plan-and-Execute with a Replan step),
-- gate the outgoing reply (**ReflectionAgent**, N=1 skip-if-pass).
+- score the outgoing reply 1-10 against a quality gate, and on failure route it back to the
+  **SupervisorAgent** for up to 2 targeted fix-round dispatches before shipping best-effort
+  (**ReflectionAgent** — Reflection),
+- **onboard a student it has never seen before straight from a transcript**
+  (**StudentOnboarder** — creates a profile with a stated assumed exam date + target grade and
+  0.5-mastery/0.2-confidence priors on every concept; the tutor corrects any of it just by
+  replying).
 
 A **SupervisorAgent** (ReAct-style dispatch, ≤6) coordinates the specialists; an **IntentRouter**
 (few-shot) classifies transcripts vs. questions vs. out-of-scope. Different inputs produce visibly
@@ -52,8 +58,10 @@ edges, mastery, sessions, forecasts, plans, llm_usage) · **Pinecone** (namespac
 `exams`, `notes-{student}`) · **LLMod.ai** models `MB5R2CF-azure/gpt-5.4-mini` +
 `MB5R2CF-azure/text-embedding-3-small`.
 
-Efficiency guardrails: ≤15 LLM calls/run (hard budget in `lib/config.ts`), capped ReAct loops,
-compact state digests, 3 pure-code modules, every call token-logged (`npm run budget`).
+Efficiency guardrails: ≤20 LLM calls/run (hard budget in `lib/config.ts`), capped ReAct loops,
+compact state digests, 3 pure-code modules, every call token-logged (`npm run budget`); a failed
+ReflectionAgent check routes the draft back to the Supervisor for up to 2 fix rounds before the
+agent ships best-effort.
 
 ## Setup
 

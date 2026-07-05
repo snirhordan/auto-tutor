@@ -22,6 +22,53 @@ export async function listStudents(): Promise<StudentRow[]> {
   return (data ?? []) as StudentRow[];
 }
 
+/** lowercase; runs of non-alphanumerics collapse to "-"; Hebrew letters pass through as-is. */
+function slug(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9֐-׿]+/g, "-");
+}
+
+/** 4-char base36 suffix, zero-padded — collision-resistant enough for a demo cohort. */
+function randomSuffix(): string {
+  return Math.floor(Math.random() * 36 ** 4)
+    .toString(36)
+    .padStart(4, "0");
+}
+
+/** StudentOnboarder: create a brand-new student profile with no prior evidence — every concept
+ * starts at 0.5 mastery / 0.2 confidence until real session evidence arrives. */
+export async function createStudent(
+  name: string,
+  examDate: string,
+  targetGrade: number,
+): Promise<StudentRow> {
+  const db = supabase();
+  const student: StudentRow = {
+    id: `stu-${slug(name)}-${randomSuffix()}`,
+    name,
+    track: "5u",
+    exam_date: examDate,
+    target_grade: targetGrade,
+  };
+  const { error } = await db.from("students").insert(student);
+  if (error) throw new Error(`student insert: ${error.message}`);
+
+  const concepts = await loadConcepts();
+  if (concepts.length) {
+    const masteryRows: MasteryRow[] = concepts.map((c) => ({
+      student_id: student.id,
+      concept_id: c.id,
+      mastery: 0.5,
+      confidence: 0.2,
+      evidence_count: 0,
+      last_evidence_at: null,
+      error_patterns: [],
+    }));
+    const { error: mErr } = await db.from("mastery").insert(masteryRows);
+    if (mErr) throw new Error(`mastery insert (onboarding): ${mErr.message}`);
+  }
+  return student;
+}
+
 export async function loadConcepts(): Promise<ConceptRow[]> {
   const { data, error } = await supabase().from("concepts").select("*");
   if (error) throw new Error(`concepts: ${error.message}`);

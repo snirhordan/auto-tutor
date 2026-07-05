@@ -89,6 +89,12 @@ simple(19, 37.5, 14, 5.5, "Refusal / Clarify", "out-of-scope refusal;\nunknown s
 badge(19.6, 42.2, "code")
 arrow(26, 46.6, 26, 43.6, color=GREY)
 
+# ---- onboarding path ----
+simple(1.5, 37.5, 14, 5.5, "StudentOnboarder",
+       "unknown student on a\ntranscript → create profile\n(0.5 priors), state\nassumptions")
+badge(2.1, 42.2, "code")
+arrow(19.4, 49, 15.6, 40.5, color=GREY)
+
 # ---- sub-agent blocks (right column) ----
 block(60, 49.5, 38, 10.5, "DiagnosisAgent", [
     ("TranscriptAnalyzer [LLM · few-shot]   ·   MasteryUpdater [code]", INK, "normal"),
@@ -122,10 +128,12 @@ arrow(55.4, 46.5, 59.6, 21.5)
 # ---- composer → reflection → response ----
 simple(19, 25.5, 14, 6, "ResponseComposer", "assembles artifacts\ninto the reply")
 badge(19.6, 30.9, "code")
-simple(1.5, 25.5, 13, 6, "ReflectionAgent", "critiques the outgoing\nreply; N=1, skip-if-pass")
+simple(1.5, 25.5, 13, 6, "ReflectionAgent", "scores the outgoing reply\n1-10; pass at >= 8")
 badge(2.1, 30.9, "LLM · Reflection")
 arrow(42, 45.1, 30, 31.9)
 arrow(18.6, 28.5, 15, 28.5)
+arrow(8, 31.5, 39, 45, color=GREY, ls="--", lw=1.1)
+ax.text(36, 35.3, "fail → fix round (≤2)", ha="center", fontsize=7.5, color=GREY, style="italic")
 simple(1.5, 16.5, 13, 5.5, "Response + steps[]", "full trace of every\nmodule call", fc=BLUE_SOFT)
 arrow(8, 25.1, 8, 22.4)
 
@@ -145,7 +153,8 @@ arrow(73, 13.9, 73, 17.1, color=GREY, ls="--", lw=1.1)   # pinecone → studentq
 arrow(84, 13.9, 90, 49.1, color=GREY, ls="--", lw=1.1)   # pinecone → diagnosis (curriculum search)
 
 ax.text(50, 1.9, "Every LLM call appears in steps[] under its module name; deterministic modules are traced with llm:false.  "
-                 "Guardrails: ≤15 LLM calls/run, capped loops, compact state digests.",
+                 "Guardrails: ≤20 LLM calls/run, capped loops, compact state digests, and a reflection "
+                 "routing loop (fail → Supervisor fix round, ≤2) before shipping best-effort.",
         ha="center", fontsize=9, color=GREY)
 ax.text(50, 0.2, "Patterns (course 960237): Supervisor · ReAct · Plan-and-Execute · Reflection ×2 · Multi-Agent · Agentic RAG · "
                  "N-shot per module · Persona/CoT/Question-Refinement prompting",

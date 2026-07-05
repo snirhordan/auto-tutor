@@ -70,20 +70,20 @@ d("AutoTutor eval — autonomy behaviors", () => {
     expect(m).toContain("DiagnosisAgent.TranscriptAnalyzer");
     expect(m).toContain("DiagnosisAgent.MasteryUpdater");
     expect(m).toContain("AssessmentAgent.ExamForecaster");
-    expect(llmCalls(itai1)).toBeLessThanOrEqual(15);
+    expect(llmCalls(itai1)).toBeLessThanOrEqual(20);
   });
 
   it("2) Itai probe session: the agent audits its own prior forecast (self-correction)", async () => {
     itai2 = await run(t("2_itai_probes.txt"));
     assertStepSchema(itai2);
     expect(modules(itai2)).toContain("AssessmentAgent.ForecastAuditor");
-    expect(llmCalls(itai2)).toBeLessThanOrEqual(15);
+    expect(llmCalls(itai2)).toBeLessThanOrEqual(20);
   });
 
   it("3) Noa clean session: no weak concepts + on track → no replan, shorter trace", async () => {
     noa = await run(t("3_noa_clean.txt"));
     assertStepSchema(noa);
-    expect(llmCalls(noa)).toBeLessThanOrEqual(15);
+    expect(llmCalls(noa)).toBeLessThanOrEqual(20);
     expect(modules(noa)).not.toContain("PlannerAgent.PlannerLLM");
   });
 
@@ -124,5 +124,21 @@ d("AutoTutor eval — autonomy behaviors", () => {
     assertStepSchema(r);
     expect(modules(r)).toContain("StudentQueryAgent");
     expect(modules(r)).not.toContain("DiagnosisAgent.TranscriptAnalyzer");
+  });
+
+  it("9) unknown student in a transcript → onboarded with stated priors, then processed", async () => {
+    const name = `Onboard${Date.now()}`;
+    const transcript =
+      `Student: ${name}\nTutor: differentiate x^3. ${name}: 3x^2. Tutor: and sin(2x)? ${name}: 2cos(2x).`;
+    const r = await run(transcript);
+    assertStepSchema(r);
+    const m = modules(r);
+    expect(m).toContain("StudentOnboarder"); // deterministic trace step — set before any reflection pass runs
+    expect(m).toContain("DiagnosisAgent.TranscriptAnalyzer"); // the session was actually processed
+    // The final response can be the deterministic compose() draft OR a ReflectionAgent
+    // rewrite (verdict.revised) if the draft failed the quality gate through every fix
+    // round — the rewrite isn't required to contain the literal word "onboard", but a
+    // response about this brand-new student is expected to still name them.
+    expect(r.response).toMatch(new RegExp(`onboard|${name}`, "i"));
   });
 });

@@ -142,5 +142,6 @@ export interface RunArtifacts {
   brief?: string;
   queryAnswer?: string;
   clarification?: string;
+  onboarded?: { name: string; exam_date: string; target_grade: number };
   language: "en" | "he";
 }

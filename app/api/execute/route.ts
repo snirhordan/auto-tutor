@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { executeAgent } from "@/lib/agent/run";
 
 // Vercel serverless limit for this project is 300s — the agent's guardrails
-// (≤15 LLM calls, capped loops) keep worst-case runs well under it.
+// (≤20 LLM calls, capped loops) keep worst-case runs well under it.
 export const maxDuration = 300;
 export const runtime = "nodejs";
 
