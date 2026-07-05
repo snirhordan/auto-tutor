@@ -3,8 +3,8 @@
 Final project, **course 960237 — Introduction to Modern AI Agents** (Technion, Spring 2026).
 Team **The Autonomous**: Snir Hordan · Omer Yom Tov · Oz Diamond.
 
-**Vercel URL:** _(added at deployment)_
-**GitHub Repo URL:** _(this repository)_
+**Vercel URL:** https://auto-tutor-seven.vercel.app
+**GitHub Repo URL:** https://github.com/snirhordan/auto-tutor
 
 ## What it is
 
