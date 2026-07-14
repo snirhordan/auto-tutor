@@ -84,3 +84,20 @@ create index if not exists idx_sessions_student on sessions(student_id, session_
 create index if not exists idx_forecasts_student on forecasts(student_id, created_at desc);
 create index if not exists idx_plans_student on plans(student_id, created_at desc);
 create index if not exists idx_usage_run on llm_usage(run_id);
+
+-- ---------------------------------------------------------------------------
+-- Row Level Security: deny-by-default posture.
+-- The app (Vercel functions + scripts) uses ONLY the service_role key, which
+-- bypasses RLS — so enabling RLS with NO policies blocks all direct PostgREST
+-- access via the anon/publishable key without affecting the app at all.
+-- No policies are defined on purpose: this project has no client-side DB
+-- access model. If one is ever added, write explicit per-role policies here.
+-- Idempotent: safe to re-run.
+alter table students      enable row level security;
+alter table concepts      enable row level security;
+alter table concept_edges enable row level security;
+alter table mastery       enable row level security;
+alter table sessions      enable row level security;
+alter table forecasts     enable row level security;
+alter table plans         enable row level security;
+alter table llm_usage     enable row level security;
