@@ -2,7 +2,10 @@
 """Download + extract the real Ministry of Education corpus for AutoTutor.
 
 1. Past bagrut exams: meyda.education.gov.il/sheeloney_bagrut/{year}/{season}/HEB/{code}.pdf
-   codes 35581/35582 (5-unit she'elonim), seasons 1 (winter) / 8 (summer).
+   codes 35581/35582 (5-unit she'elonim). `season` is the Ministry's own path segment:
+   1 = winter (choref), 8 = summer moed BET (kayitz, moed b) — verified against the cover
+   page of all 20 downloaded papers. NOTE: summer moed ALEF sits under a different season
+   code that is not downloaded here, so this corpus is winter + summer make-up papers only.
 2. Syllabus/curriculum PDFs: any PDF placed in data/ministry/syllabus/ is extracted too
    (drop files from pop.education.gov.il there); a few known URLs are attempted.
 
@@ -29,7 +32,7 @@ MANIFEST = os.path.join(ROOT, "data/ministry/manifest.json")
 
 EXAM_URL = "https://meyda.education.gov.il/sheeloney_bagrut/{year}/{season}/HEB/{code}.pdf"
 YEARS = [2021, 2022, 2023, 2024, 2025]
-SEASONS = [1, 8]  # winter, summer
+SEASONS = [1, 8]  # 1 = winter (choref); 8 = summer moed bet (kayitz, moed b)
 CODES = [35581, 35582]
 
 # Real 5-unit curriculum documents (links scraped from

@@ -1,0 +1,30 @@
+# Backup keepalive for the free-tier Supabase project.
+#
+# Supabase pauses free-tier projects after 7 days of inactivity, which breaks
+# /api/execute entirely. vercel.json already runs a daily cron against
+# /api/keepalive; this workflow is an independent second ping so a single
+# scheduler failing cannot take the project down during grading.
+#
+# No secrets required: it calls the public production URL, and the endpoint
+# touches Supabase server-side with the deployment's own env vars.
+name: keepalive
+
+on:
+  schedule:
+    # 18:00 UTC daily — deliberately offset ~12h from the Vercel cron (06:00 UTC).
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /api/keepalive
+        run: |
+          set -euo pipefail
+          code=$(curl -sS -o response.json -w '%{http_code}' --max-time 60 \
+            https://auto-tutor-seven.vercel.app/api/keepalive)
+          echo "HTTP $code"
+          cat response.json
+          echo
+          test "$code" = "200"
