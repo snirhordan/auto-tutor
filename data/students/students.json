@@ -1,11 +1,11 @@
 {
-  "comment": "Synthesized demo students. mastery_default seeds every concept; overrides express each student's story. Shared exam date = summer 582 sitting.",
+  "comment": "Synthesized demo students. mastery_default seeds every concept; overrides express each student's story. Itai and Noa are regular winter takers (35582 sitting, winter). Dana's deadline is an early-school-year matkonet (mock exam), not a bagrut sitting — no official 5u sitting falls inside her runway — which is what forces calendar triage. exam_date is just 'the date she is being prepared for'; the schema has no exam-type field.",
   "students": [
     {
       "id": "stu-itai-h11",
       "name": "Itai",
       "track": "5u",
-      "exam_date": "2026-07-22",
+      "exam_date": "2027-01-26",
       "target_grade": 92,
       "story": "Strong in calculus, shaky on vectors — with a hidden trig-foundation gap the sessions will expose.",
       "mastery_default": 0.75,
@@ -25,7 +25,7 @@
       "id": "stu-noa-h12",
       "name": "Noa",
       "track": "5u",
-      "exam_date": "2026-07-22",
+      "exam_date": "2027-01-26",
       "target_grade": 95,
       "story": "Consistently strong; sessions mostly confirm mastery and advance the roadmap.",
       "mastery_default": 0.85,
@@ -38,9 +38,9 @@
       "id": "stu-dana-h11",
       "name": "Dana",
       "track": "5u",
-      "exam_date": "2026-07-22",
+      "exam_date": "2026-10-19",
       "target_grade": 75,
-      "story": "Far behind with weeks to the exam — forces calendar triage: which topics to drop, which to double down on.",
+      "story": "Far behind with weeks to go before an early-school-year matkonet (mock exam) — not a bagrut sitting, since none falls inside her runway. The short calendar forces triage: which topics to drop, which to double down on.",
       "mastery_default": 0.55,
       "overrides": {
         "5u.geo3d.vectors-basic": { "mastery": 0.35 },
