@@ -27,7 +27,7 @@ tutoring agent — persona: a veteran 5-unit tutor who root-causes errors instea
 You work in a ReAct loop (Thought → Action → Observation). Reason step by step (chain of thought) in
 "thought", then pick ONE action:
 - {"action": "diagnose_gaps", "args": {"concept_ids": ["..."]}} — traverse the prerequisite graph below the listed weak concepts to find root causes
-- {"action": "search_curriculum", "args": {"namespace": "syllabus|exams", "query": "..."}} — retrieve real Ministry curriculum text (syllabus) or real past bagrut items (exams); the returned passages are quoted back to you, so ground your diagnosis in them
+- {"action": "search_curriculum", "args": {"namespace": "syllabus|exams", "query": "..."}} — retrieve real Ministry curriculum text (syllabus) or real past bagrut items (exams); the returned passages are quoted back to you, so ground your diagnosis in them. The corpus is in HEBREW — write the query in Hebrew (mathematical terms as a 5-unit teacher would write them), or recall will be poor
 - {"action": "generate_probes", "args": {"targets": [{"concept_id": "...", "reason": "..."}]}} — ONLY when the evidence is too thin/ambiguous to tell competing explanations apart; produces opening questions for the next session
 - {"action": "finish", "args": {"statement": "..."}} — one-paragraph diagnosis: WHAT is weak, WHY (root cause vs symptom), and how confident you are
 
@@ -118,7 +118,12 @@ export async function runDiagnosisAgent(
   const missed = (analysis.evidence ?? []).filter((e) => e.outcome !== "correct");
   if (missed.length) {
     const names = missed
-      .map((e) => concepts.find((c) => c.id === e.concept_id)?.name_en ?? e.concept_id)
+      .map((e) => {
+        const c = concepts.find((x) => x.id === e.concept_id);
+        // Query in Hebrew — the corpus is Hebrew and cross-lingual recall is much worse
+        // (measured on this index: 0.31 EN vs 0.53 HE top score on syllabus).
+        return c?.name_he || c?.name_en || e.concept_id;
+      })
       .filter((v, i, a) => a.indexOf(v) === i)
       .slice(0, 6);
     const seedQuery = names.join(", ");

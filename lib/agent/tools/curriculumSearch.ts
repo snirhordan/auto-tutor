@@ -19,6 +19,10 @@ const MIN_EXCERPT_CHARS = 40;
 // especially) extract as runs of bare digits and punctuation. Feeding those to an LLM
 // is worse than feeding nothing, so a chunk must be mostly real letters to qualify.
 const MIN_LETTER_RATIO = 0.45;
+// The corpus is Hebrew, so a Hebrew query scores ~0.5 on a real match while an unrelated
+// chunk sits near 0.25. Below this floor the curated concept descriptions are better
+// grounding than the passage, so don't forward noise into the prompt.
+const MIN_SCORE = 0.3;
 
 export interface SearchHit {
   source: string;
@@ -56,6 +60,10 @@ export async function curriculumSearch(
     const [vector] = await embed([query], trace.runId);
     const chunks = await queryNamespace(ns, vector, TOP_K);
     for (const c of chunks) {
+      if (c.score < MIN_SCORE) {
+        dropped += 1; // too weak to be about this query at all
+        continue;
+      }
       const excerpt = readableExcerpt(c.text);
       if (!excerpt) {
         dropped += 1; // unreadable glyph soup — never forward it to a prompt
@@ -78,7 +86,7 @@ export async function curriculumSearch(
     `Agentic RAG: namespace=${namespace}, query="${query.slice(0, 120)}"`,
     failed
       ? { retrieval_error: true, hits: [] }
-      : { hits: hits.map((h) => ({ source: h.source, score: h.score, excerpt: h.excerpt })), unreadable_chunks_dropped: dropped },
+      : { hits: hits.map((h) => ({ source: h.source, score: h.score, excerpt: h.excerpt })), chunks_dropped_low_score_or_unreadable: dropped },
     "(retrieval module — 1 embedding call, no chat completion)",
   );
   return { hits, failed };
