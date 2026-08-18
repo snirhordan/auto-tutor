@@ -29,6 +29,10 @@ export async function runAssessmentAgent(
   masteryRows: MasteryRow[],
   concepts: ConceptRow[],
   newEvidenceSummary: string,
+  /** True when this run recorded mastery changes. The agent owes its prior
+   *  forecast an audit whenever it has actually learned something new — not
+   *  only when the new number happens to move a lot. */
+  evidenceRecorded: boolean,
   language: "en" | "he",
   now: Date,
 ): Promise<AssessmentResult> {
@@ -39,11 +43,14 @@ export async function runAssessmentAgent(
 
   const result: AssessmentResult = { pace: p, forecast: f, priorForecast: prior };
 
-  // Reflect only when there is a prior prediction to be accountable to,
-  // and something meaningful changed (skip-if-pass discipline).
+  // Reflect only when there is a prior prediction to be accountable to, and
+  // something actually changed: new session evidence, a materially different
+  // forecast, or a student who is off track (skip-if-pass discipline).
+  // Note: a small drift is NOT evidence the prior call was right — an on-track
+  // student whose probes just confirmed a suspected gap still deserves the audit.
   if (prior && trace.hasBudget(3)) {
     const drift = Math.abs(prior.predicted_grade - f.predicted_grade);
-    if (drift >= 1.5 || !p.on_track) {
+    if (evidenceRecorded || drift >= 1.5 || !p.on_track) {
       result.audit = await auditForecast(trace, prior, f, newEvidenceSummary, language);
     }
   }

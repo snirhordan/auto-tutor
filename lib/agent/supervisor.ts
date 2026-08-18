@@ -124,7 +124,8 @@ async function dispatchLoop(
           .join(", ") ?? "no new session evidence";
       const r = await runAssessmentAgent(
         trace, deps.student, deps.masteryRows, deps.concepts,
-        evidenceSummary, artifacts.language, deps.now,
+        evidenceSummary, (artifacts.masteryChanges?.length ?? 0) > 0,
+        artifacts.language, deps.now,
       );
       artifacts.pace = r.pace;
       artifacts.forecast = r.forecast;
