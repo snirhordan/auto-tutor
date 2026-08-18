@@ -40,6 +40,30 @@ Reply in strict JSON: {"thought": "...", "action": "...", "args": {...}}`;
  *  concept catalog (the same descriptions seeded into Supabase) for the concepts this
  *  session actually touched. /api/agent_info promises "curated fallbacks"; without this
  *  the agent would simply lose all curriculum grounding on a miss. */
+/** Render a retrieval result as a ReAct observation. Shared so a seeded search and one
+ *  the agent chooses itself look identical in the trace. */
+function retrievalObservation(
+  label: string,
+  outcome: { hits: { source: string; score: number; excerpt: string }[]; failed: boolean },
+  curated: string,
+): string {
+  if (outcome.failed) {
+    return (
+      `${label} → RETRIEVAL ERROR: the corpus is unavailable. Do not treat this as ` +
+      `evidence of absence; reason from the session evidence and the concept catalog.`
+    );
+  }
+  if (outcome.hits.length) {
+    return (
+      `${label} → ${outcome.hits.length} passage(s):\n` +
+      outcome.hits.map((h) => `  [${h.source} @${h.score}] ${h.excerpt}`).join("\n")
+    );
+  }
+  return curated
+    ? `${label} → no corpus match. Curated curriculum fallback:\n${curated}`
+    : `${label} → no corpus match, and no curated description covers these concepts.`;
+}
+
 function curatedFallback(
   concepts: ConceptRow[],
   analysis: TranscriptAnalysis,
@@ -86,6 +110,27 @@ export async function runDiagnosisAgent(
   const observations: string[] = [];
   const seen = new Set<string>();
 
+  // Seed the ReAct loop with real Ministry curriculum text for whatever the student got
+  // wrong. Retrieval is a single embedding call — no chat tokens, so it costs nothing
+  // against MAX_LLM_CALLS_PER_RUN — and without it the loop routinely reasons its way to
+  // "finish" without ever consulting the corpus, which left the Agentic RAG claim true
+  // only in principle. The agent can still choose further searches of either namespace.
+  const missed = (analysis.evidence ?? []).filter((e) => e.outcome !== "correct");
+  if (missed.length) {
+    const names = missed
+      .map((e) => concepts.find((c) => c.id === e.concept_id)?.name_en ?? e.concept_id)
+      .filter((v, i, a) => a.indexOf(v) === i)
+      .slice(0, 6);
+    const seedQuery = names.join(", ");
+    observations.push(
+      retrievalObservation(
+        `search_curriculum(syllabus, "${seedQuery.slice(0, 60)}") [seeded from this session's errors]`,
+        await curriculumSearch(trace, "syllabus", seedQuery),
+        curatedFallback(concepts, analysis, result),
+      ),
+    );
+  }
+
   for (let i = 0; i < MAX_DIAGNOSIS_ITERATIONS && trace.hasBudget(5); i++) {
     const state = buildState(analysis.evidence, masteryRows, concepts, result, observations, now);
     const { value } = await chatJSON<{
@@ -121,29 +166,14 @@ export async function runDiagnosisAgent(
         ? "exams"
         : "syllabus") as SearchNamespace;
       const q = String(value.args?.query ?? "");
-      const { hits, failed } = await curriculumSearch(trace, ns, q);
-      const label = `search_curriculum(${ns}, "${q.slice(0, 60)}")`;
-      if (failed) {
-        // An outage must not read as "the curriculum says nothing about this".
-        observations.push(
-          `${label} → RETRIEVAL ERROR: the corpus is unavailable. Do not treat this as ` +
-            `evidence of absence; reason from the session evidence and the concept catalog.`,
-        );
-      } else if (hits.length) {
-        // The passages themselves — this is what makes the step Agentic RAG rather
-        // than a similarity score the model cannot learn anything from.
-        observations.push(
-          `${label} → ${hits.length} passage(s):\n` +
-            hits.map((h) => `  [${h.source} @${h.score}] ${h.excerpt}`).join("\n"),
-        );
-      } else {
-        const curated = curatedFallback(concepts, analysis, result);
-        observations.push(
-          curated
-            ? `${label} → no corpus match. Curated curriculum fallback:\n${curated}`
-            : `${label} → no corpus match, and no curated description covers these concepts.`,
-        );
-      }
+      const outcome = await curriculumSearch(trace, ns, q);
+      observations.push(
+        retrievalObservation(
+          `search_curriculum(${ns}, "${q.slice(0, 60)}")`,
+          outcome,
+          curatedFallback(concepts, analysis, result),
+        ),
+      );
     } else if (value.action === "generate_probes") {
       const targets = (value.args?.targets as { concept_id: string; reason: string }[]) ?? [];
       result.probes = await generateProbes(trace, targets, concepts, language);
