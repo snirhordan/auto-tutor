@@ -25,13 +25,41 @@ to dispatch next, based on what is known so far:
 - {"dispatch": "StudentQueryAgent"} — answer a question from stored state (question intent only).
 - {"dispatch": "finalize"} — all work needed for THIS event is done; assemble the response.
 Think about what THIS event actually requires — a clean session may need no probes and only a light
-plan touch; a question needs no diagnosis at all. If the diagnosis surfaced NO weak concepts AND the
-pace report says on_track, do NOT dispatch PlannerAgent — the active roadmap stands; finalize and say
-so. Do not dispatch an agent twice.
+plan touch; a question needs no diagnosis at all. On a TRANSCRIPT event you must dispatch
+AssessmentAgent before finalize: the recomputed pace and grade forecast are required output for every
+session, however clean it looked. The skip rule below applies to PlannerAgent ONLY, and only once you
+actually hold a pace report: if the diagnosis surfaced NO weak concepts AND that pace report says
+on_track, do NOT dispatch PlannerAgent — the active roadmap stands; finalize and say so. Never infer
+on_track without an AssessmentAgent result. Do not dispatch an agent twice.
 If you see a REFLECTION FEEDBACK section, the quality gate rejected the previous draft: dispatch
 whichever specialist(s) can actually fix the listed issues, then finalize — do not just re-finalize
 without addressing them.
 Reply in strict JSON: {"thought": "...", "dispatch": "..."}`;
+
+/** Recompute pace + forecast (and self-audit when a prior forecast exists) and fold the
+ *  result into artifacts. Exported so run.ts can guarantee that a transcript event always
+ *  ends with a forecast: CurriculumPacer and ExamForecaster are pure code, so this costs
+ *  no chat call unless the auditor is eligible, and the Supervisor is an LLM that can
+ *  finalize early. */
+export async function runAssessment(
+  trace: Trace,
+  deps: SupervisorDeps,
+  artifacts: RunArtifacts,
+): Promise<void> {
+  const evidenceSummary =
+    artifacts.analysis?.evidence
+      .map((e) => `${e.concept_id}:${e.outcome}${e.error_pattern ? `[${e.error_pattern}]` : ""}`)
+      .join(", ") ?? "no new session evidence";
+  const r = await runAssessmentAgent(
+    trace, deps.student, deps.masteryRows, deps.concepts,
+    evidenceSummary, (artifacts.masteryChanges?.length ?? 0) > 0,
+    artifacts.language, deps.now,
+  );
+  artifacts.pace = r.pace;
+  artifacts.forecast = r.forecast;
+  artifacts.priorForecast = r.priorForecast;
+  artifacts.audit = r.audit;
+}
 
 // Fix rounds get a small, separate dispatch budget — they exist to patch specific
 // reflection issues, not to re-run the whole pipeline.
@@ -119,19 +147,7 @@ async function dispatchLoop(
       artifacts.diagnosis = r.diagnosis;
       artifacts.probes = r.probes;
     } else if (d === "AssessmentAgent") {
-      const evidenceSummary =
-        artifacts.analysis?.evidence
-          .map((e) => `${e.concept_id}:${e.outcome}${e.error_pattern ? `[${e.error_pattern}]` : ""}`)
-          .join(", ") ?? "no new session evidence";
-      const r = await runAssessmentAgent(
-        trace, deps.student, deps.masteryRows, deps.concepts,
-        evidenceSummary, (artifacts.masteryChanges?.length ?? 0) > 0,
-        artifacts.language, deps.now,
-      );
-      artifacts.pace = r.pace;
-      artifacts.forecast = r.forecast;
-      artifacts.priorForecast = r.priorForecast;
-      artifacts.audit = r.audit;
+      await runAssessment(trace, deps, artifacts);
     } else if (d === "PlannerAgent") {
       if (!artifacts.pace || !artifacts.forecast) {
         // Dependencies not ready (the Supervisor picked the planner before the

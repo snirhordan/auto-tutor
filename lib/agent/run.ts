@@ -12,7 +12,7 @@ import {
 import type { RunArtifacts, Step } from "./types";
 import { Trace } from "./types";
 import { detectLanguage, routeIntent } from "./intentRouter";
-import { runSupervisor, runSupervisorFixRound } from "./supervisor";
+import { runAssessment, runSupervisor, runSupervisorFixRound } from "./supervisor";
 import type { SupervisorDeps } from "./supervisor";
 import { runReflectionAgent } from "./subagents/reflectionAgent";
 import {
@@ -109,6 +109,20 @@ export async function executeAgent(prompt: string): Promise<ExecuteResult> {
     now,
   };
   await runSupervisor(trace, routed.intent, deps, artifacts);
+
+  // Deterministic guarantee: a transcript event always ends with a pace report and a
+  // forecast. The Supervisor is an LLM and has been observed finalizing straight after
+  // diagnosis (reading the "skip PlannerAgent when nothing is weak" rule as licence to
+  // skip the assessment too), which silently dropped the forecast section from the reply.
+  // CurriculumPacer and ExamForecaster are pure code, so backfilling costs no chat call.
+  if (routed.intent === "transcript" && artifacts.analysis && !artifacts.forecast) {
+    trace.addCode(
+      "SupervisorAgent",
+      "assessment missing after dispatch loop — backfilling pace + forecast (required for every transcript event)",
+      { backfilled: true },
+    );
+    await runAssessment(trace, deps, artifacts);
+  }
 
   // Question-Refinement path: the agent asks instead of guessing.
   if (artifacts.clarification) {
