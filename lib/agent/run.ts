@@ -18,11 +18,9 @@ import { runReflectionAgent } from "./subagents/reflectionAgent";
 import {
   createStudent,
   findStudent,
-  listStudents,
   loadConcepts,
   loadEdges,
   loadMastery,
-  saveSession,
 } from "./state";
 
 export interface ExecuteResult {
@@ -80,11 +78,13 @@ export async function executeAgent(prompt: string): Promise<ExecuteResult> {
   }
 
   if (!student) {
-    const known = (await listStudents()).map((s) => `${s.name} (${s.id})`).join(", ");
+    // Ask for the name instead of listing the roster: /api/execute is unauthenticated,
+    // so enumerating every student handed any anonymous caller the full cohort (and the
+    // ids needed to pull each student's mastery and forecast).
     const ask =
       routed.intent === "transcript"
-        ? `I couldn't match this transcript to a student${routed.student_ref ? ` ("${routed.student_ref}")` : ""}. Whose session is this? Known students: ${known}. Add "Student: <name>" at the top of the transcript.`
-        : `Which student do you mean${routed.student_ref ? ` by "${routed.student_ref}"` : ""}? Known students: ${known}.`;
+        ? `I couldn't match this transcript to a student${routed.student_ref ? ` ("${routed.student_ref}")` : ""}. Whose session is this? Add "Student: <name>" at the top of the transcript.`
+        : `Which student do you mean${routed.student_ref ? ` by "${routed.student_ref}"` : ""}? Tell me the student's name and I'll pull up their mastery, forecast and plan.`;
     trace.addCode("ResponseComposer", "assemble clarification (unknown student)", {
       clarification: true,
     });
@@ -118,10 +118,8 @@ export async function executeAgent(prompt: string): Promise<ExecuteResult> {
     return { response: artifacts.clarification, steps: trace.steps };
   }
 
-  // 4) Persist the session (transcript events).
-  if (routed.intent === "transcript" && artifacts.analysis) {
-    await saveSession(student.id, prompt, artifacts.analysis.session_summary, artifacts.analysis.evidence);
-  }
+  // 4) The session row is written by DiagnosisAgent before it mutates mastery, so the
+  //    audit trail survives a failure later in the run.
 
   // 5) Assemble the response (code), then run the Reflection quality gate (LLM). A failing
   // verdict routes back to the Supervisor for a bounded number of fix rounds before we ship

@@ -7,7 +7,11 @@ import { saveForecast } from "../state";
 
 // Exam score expected from a mastery level: exams punish partial mastery
 // (an 0.6-mastery student loses method marks), hence the mild convexity.
-const expectedScore = (m: number) => Math.pow(m, 1.3);
+const SCORE_EXPONENT = 1.3;
+const expectedScore = (m: number) => Math.pow(m, SCORE_EXPONENT);
+/** Mastery a student needs so expectedScore(m)*100 reaches `grade` — the inverse of the
+ *  curve above. Needed because a target is expressed as a GRADE but mastery is not a grade. */
+const masteryForGrade = (grade: number) => Math.pow(grade / 100, 1 / SCORE_EXPONENT);
 
 const LESSONS_PER_MASTERY_POINT = 6; // sessions to raise weighted mastery by 0.1 ≈ 0.6
 
@@ -49,7 +53,11 @@ export async function forecast(
         return acc + (c?.exam_weight ?? 0) * v;
       }, 0) / wSum
     : 0.5;
-  const gapToTarget = Math.max(0, student.target_grade / 100 - weightedMastery);
+  // Compare like with like. predicted_grade puts mastery through expectedScore, so the
+  // remaining gap has to be measured in mastery space against the mastery that actually
+  // yields the target grade. Comparing raw mastery to target/100 understated the gap and
+  // reported "0 lessons needed" while forecasting several points BELOW target.
+  const gapToTarget = Math.max(0, masteryForGrade(student.target_grade) - weightedMastery);
   const lessonsNeeded = Math.ceil(gapToTarget * 10 * LESSONS_PER_MASTERY_POINT);
 
   const f: Forecast = {

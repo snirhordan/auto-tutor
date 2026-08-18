@@ -32,8 +32,13 @@ question about a student), and the agent decides on its own what the event requi
   0.5-mastery/0.2-confidence priors on every concept; the tutor corrects any of it just by
   replying).
 
+It also answers questions about a student from stored state — quantified and
+uncertainty-honest, never re-deriving from the transcript (**StudentQueryAgent** — persona).
+
 A **SupervisorAgent** (ReAct-style dispatch, ≤6) coordinates the specialists; an **IntentRouter**
-(few-shot) classifies transcripts vs. questions vs. out-of-scope. Different inputs produce visibly
+(few-shot) classifies transcripts vs. questions vs. out-of-scope; a deterministic
+**ResponseComposer** assembles every reply from the artifacts the specialists produced, so the
+prose can never claim more than the modules actually computed. Different inputs produce visibly
 different `steps[]` traces — this is an agent, not a pipeline (see `/api/model_architecture`).
 
 Course patterns used: Supervisor · ReAct · Plan-and-Execute · Reflection ×2 · Multi-Agent ·
@@ -55,11 +60,13 @@ No authentication.
 
 Next.js (App Router, TypeScript) on **Vercel** · **Supabase** (students, concepts, prerequisite
 edges, mastery, sessions, forecasts, plans, llm_usage) · **Pinecone** (namespaces: `syllabus`,
-`exams`, `notes-{student}`) · **LLMod.ai** models `MB5R2CF-azure/gpt-5.4-mini` +
+`exams`) · **LLMod.ai** models `MB5R2CF-azure/gpt-5.4-mini` +
 `MB5R2CF-azure/text-embedding-3-small`.
 
 Efficiency guardrails: ≤20 LLM calls/run (hard budget in `lib/config.ts`), capped ReAct loops,
-compact state digests, 3 pure-code modules, every call token-logged (`npm run budget`); a failed
+compact state digests, 7 deterministic (zero-chat-token) modules, every call token-logged
+(`npm run budget`); JSON replies are provider-enforced and any repair retry is itself traced and
+counted against the budget; a failed
 ReflectionAgent check routes the draft back to the Supervisor for up to 2 fix rounds before the
 agent ships best-effort.
 

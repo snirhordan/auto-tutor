@@ -46,6 +46,7 @@ export async function runStudentQueryAgent(
     system: SYSTEM,
     user,
     runId: trace.runId,
+    trace,
   });
   trace.addLlm("StudentQueryAgent", { system_prompt: SYSTEM, user_prompt: user }, value);
   return value.answer;

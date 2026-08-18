@@ -23,6 +23,9 @@ export interface ReflectionVerdict {
   pass: boolean;
   issues: string[];
   revised: string | null;
+  /** True when the gate never ran (budget exhausted). The draft still ships, but the
+   *  trace must not present an unreviewed response as a 10/10 pass. */
+  skipped?: boolean;
 }
 
 export async function runReflectionAgent(
@@ -31,8 +34,20 @@ export async function runReflectionAgent(
   contextSummary: string,
 ): Promise<ReflectionVerdict> {
   if (!trace.hasBudget(1)) {
-    // budget guard: ship the draft as-is, no LLM call and no trace step
-    return { score: 10, pass: true, issues: [], revised: null };
+    // Budget guard: we still have to ship something, but a gate that never ran must not
+    // be indistinguishable from a perfect score. Record a real step and say so.
+    trace.addCode(
+      "ReflectionAgent",
+      "insufficient LLM budget — quality gate skipped; shipping the draft unreviewed",
+      { skipped: true, reviewed: false, reason: "per-run LLM budget exhausted" },
+    );
+    return {
+      score: 0,
+      pass: true,
+      issues: ["quality gate skipped: per-run LLM budget exhausted"],
+      revised: null,
+      skipped: true,
+    };
   }
   const user = `CONTEXT:\n${contextSummary}\n\nDRAFT RESPONSE:\n${draft}`;
   const { value } = await chatJSON<ReflectionVerdict>({
@@ -40,6 +55,7 @@ export async function runReflectionAgent(
     system: SYSTEM,
     user,
     runId: trace.runId,
+    trace,
   });
   const verdict: ReflectionVerdict = {
     score: value.score,

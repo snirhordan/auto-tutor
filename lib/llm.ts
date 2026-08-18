@@ -3,6 +3,7 @@
 import OpenAI from "openai";
 import { CHAT_MODEL, EMBEDDING_MODEL } from "./config";
 import { logUsage } from "./supabase";
+import type { Trace } from "./agent/types";
 
 export const openai = new OpenAI({
   apiKey: process.env.LLMOD_API_KEY,
@@ -18,6 +19,11 @@ export interface ChatArgs {
   system: string;
   user: string;
   runId?: string;
+  /** Ask the provider to constrain the reply to a JSON object. Set by chatJSON. */
+  json?: boolean;
+  /** Passing the trace lets chatJSON record billed JSON-repair retries, which would
+   *  otherwise be invisible to both steps[] and the per-run budget guard. */
+  trace?: Trace;
 }
 
 export interface ChatResult {
@@ -27,13 +33,17 @@ export interface ChatResult {
 }
 
 /** One chat completion. Every call is usage-logged under its module name. */
-export async function chat({ module, system, user, runId }: ChatArgs): Promise<ChatResult> {
+export async function chat({ module, system, user, runId, json }: ChatArgs): Promise<ChatResult> {
   const res = await openai.chat.completions.create({
     model: CHAT_MODEL,
     messages: [
       { role: "system", content: system },
       { role: "user", content: user },
     ],
+    // Provider-enforced JSON removes almost all parse failures at the source, which is
+    // cheaper than paying for a full-prompt repair retry (verified supported on the
+    // course's Azure deployment).
+    ...(json ? { response_format: { type: "json_object" as const } } : {}),
   });
   const usage = res.usage;
   await logUsage({
@@ -52,12 +62,16 @@ export async function chat({ module, system, user, runId }: ChatArgs): Promise<C
 /** Chat call whose answer must be a JSON object. Up to 3 attempts on parse failure. */
 export async function chatJSON<T>(args: ChatArgs): Promise<{ value: T; raw: ChatResult }> {
   const sys = args.system + "\nReturn ONLY a valid JSON object. No prose, no markdown fences.";
-  let raw = await chat({ ...args, system: sys });
+  let raw = await chat({ ...args, system: sys, json: true });
   let parsed = tryParse<T>(raw.text);
   for (let attempt = 0; parsed === undefined && attempt < 2; attempt++) {
+    // The unusable reply was still billed. Record it so steps[] describes every LLM
+    // call (as the spec requires) and the budget guard sees the real spend.
+    args.trace?.addFailedAttempt(args.module, attempt + 1, raw.text);
     raw = await chat({
       ...args,
       system: sys,
+      json: true,
       user: args.user + "\n\nYour previous reply was not valid JSON. Reply with the JSON object only.",
     });
     parsed = tryParse<T>(raw.text);

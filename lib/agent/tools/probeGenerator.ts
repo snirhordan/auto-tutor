@@ -42,6 +42,7 @@ export async function generateProbes(
     system: SYSTEM,
     user,
     runId: trace.runId,
+    trace,
   });
   trace.addLlm(
     "DiagnosisAgent.ProbeGenerator",

@@ -34,6 +34,7 @@ export async function routeIntent(trace: Trace, prompt: string): Promise<RoutedI
     system: SYSTEM,
     user,
     runId: trace.runId,
+    trace,
   });
   trace.addLlm(
     "IntentRouter",

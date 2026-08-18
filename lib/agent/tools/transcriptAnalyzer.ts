@@ -51,6 +51,7 @@ export async function analyzeTranscript(
     system: SYSTEM,
     user,
     runId: trace.runId,
+    trace,
   });
   // Defensive normalization
   value.evidence = (value.evidence ?? []).filter((e) =>

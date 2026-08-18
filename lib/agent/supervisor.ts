@@ -97,6 +97,7 @@ async function dispatchLoop(
       system: SYSTEM,
       user: state,
       runId: trace.runId,
+      trace,
     });
     trace.addLlm("SupervisorAgent", { system_prompt: SYSTEM, user_prompt: state }, value);
 
@@ -132,7 +133,13 @@ async function dispatchLoop(
       artifacts.priorForecast = r.priorForecast;
       artifacts.audit = r.audit;
     } else if (d === "PlannerAgent") {
-      if (!artifacts.pace || !artifacts.forecast) continue; // dependency guard
+      if (!artifacts.pace || !artifacts.forecast) {
+        // Dependencies not ready (the Supervisor picked the planner before the
+        // assessment). Un-mark it: leaving it in `dispatched` makes the next pick hit the
+        // `dispatched.has(d)` break above and end the whole run with no roadmap at all.
+        dispatched.delete(d);
+        continue;
+      }
       const weakSummary =
         artifacts.diagnosis?.weak_concepts
           .map((w) => `${w.concept_id}@${w.mastery}`)

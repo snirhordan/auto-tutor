@@ -85,6 +85,13 @@ create index if not exists idx_forecasts_student on forecasts(student_id, create
 create index if not exists idx_plans_student on plans(student_id, created_at desc);
 create index if not exists idx_usage_run on llm_usage(run_id);
 
+-- At most one active plan per student. savePlan() supersedes-then-inserts as two
+-- statements; without this index two concurrent PlannerAgent dispatches for the same
+-- student can interleave and leave two rows simultaneously 'active'. activePlan() masks
+-- that by taking the newest, so the corruption is otherwise silent.
+create unique index if not exists uniq_plans_one_active
+  on plans(student_id) where status = 'active';
+
 -- ---------------------------------------------------------------------------
 -- Row Level Security: deny-by-default posture.
 -- The app (Vercel functions + scripts) uses ONLY the service_role key, which

@@ -25,15 +25,40 @@ export class Trace {
     this.steps.push({ module, prompt, response, llm: true });
   }
 
-  addCode(module: string, inputSummary: string, response: unknown): void {
+  addCode(
+    module: string,
+    inputSummary: string,
+    response: unknown,
+    /** Override when the step is not purely deterministic — e.g. a retrieval module
+     *  that makes an embedding call but no chat completion. Claiming "no LLM call"
+     *  for those would make the trace lie about its own cost. */
+    systemNote = "(deterministic module — no LLM call)",
+  ): void {
     this.steps.push({
       module,
       prompt: {
-        system_prompt: "(deterministic module — no LLM call)",
+        system_prompt: systemNote,
         user_prompt: inputSummary,
       },
       response,
       llm: false,
+    });
+  }
+
+  /** A billed completion that produced no usable JSON, so it never became a normal step.
+   *  The spec requires steps[] to describe EVERY LLM call, and MAX_LLM_CALLS_PER_RUN is
+   *  meant to bound real spend — counting only successful parses let a run bill up to 3x
+   *  its traced call count without the budget guard noticing. */
+  addFailedAttempt(module: string, attempt: number, rawText: string): void {
+    this.llmCalls += 1;
+    this.steps.push({
+      module,
+      prompt: {
+        system_prompt: "(JSON-repair retry — the previous reply was not valid JSON)",
+        user_prompt: `retry attempt ${attempt}`,
+      },
+      response: { parse_failed: true, raw_preview: rawText.slice(0, 200) },
+      llm: true,
     });
   }
 

@@ -49,6 +49,20 @@ export interface PlanResult {
   brief: string;
 }
 
+/** Keep only focus_concepts that exist in the real catalog. The prompts ask the model to
+ *  stay in-catalog, but a prompt is not an enforcement boundary: transcript text can carry
+ *  injected instructions, and an unchecked id would be persisted by savePlan and replayed
+ *  into every later session. Mirrors the filter transcriptAnalyzer applies to evidence. */
+export function sanitizeRoadmap(roadmap: RoadmapItem[], concepts: ConceptRow[]): RoadmapItem[] {
+  const valid = new Set(concepts.map((c) => c.id));
+  return (roadmap ?? [])
+    .map((item) => ({
+      ...item,
+      focus_concepts: (item.focus_concepts ?? []).filter((id) => valid.has(id)),
+    }))
+    .filter((item) => item.focus_concepts.length > 0 || (item.goal ?? "").trim().length > 0);
+}
+
 export async function runPlannerAgent(
   trace: Trace,
   student: StudentRow,
@@ -62,6 +76,23 @@ export async function runPlannerAgent(
   language: "en" | "he",
 ): Promise<PlanResult> {
   const prior = await activePlan(student.id);
+  // PlannerAgent costs 2 chat calls (planner/replan + executor). Every other specialist
+  // reserves headroom before spending; without the same guard a dispatch at the edge of
+  // the budget consumes the reserve that ReflectionAgent's quality gate needs.
+  if (!trace.hasBudget(2)) {
+    const kept = prior?.roadmap ?? [];
+    trace.addCode(
+      "PlannerAgent",
+      "insufficient LLM budget for planning — reusing the active roadmap instead of replanning",
+      { budget_exhausted: true, reused_active_plan: kept.length > 0, lessons: kept.length },
+    );
+    return {
+      roadmap: kept,
+      brief: prior?.brief ?? "",
+      replanRationale: undefined,
+      triageNote: undefined,
+    };
+  }
   const langNote = `Write all prose in ${language === "he" ? "Hebrew" : "English"}.`;
   const conceptIds = `CONCEPT IDS you may use in focus_concepts:\n${concepts.map((c) => c.id).join(", ")}\n`;
 
@@ -87,10 +118,13 @@ export async function runPlannerAgent(
       decision: "keep" | "restructure";
       rationale: string;
       roadmap: RoadmapItem[];
-    }>({ module: "PlannerAgent.ReplanLLM", system: REPLAN_SYSTEM, user, runId: trace.runId });
+    }>({ module: "PlannerAgent.ReplanLLM", system: REPLAN_SYSTEM, user, runId: trace.runId, trace });
     trace.addLlm("PlannerAgent.ReplanLLM", { system_prompt: REPLAN_SYSTEM, user_prompt: user }, value);
     replanRationale = value.rationale;
-    roadmap = value.decision === "restructure" && value.roadmap?.length ? value.roadmap : prior.roadmap;
+    roadmap =
+      value.decision === "restructure" && value.roadmap?.length
+        ? sanitizeRoadmap(value.roadmap, concepts)
+        : prior.roadmap;
   } else {
     // Fresh plan path.
     const user = situation + `\nPlan at most ${Math.max(1, Math.min(paceReport.sessions_left, 8))} lessons.\n${langNote}`;
@@ -99,9 +133,10 @@ export async function runPlannerAgent(
       system: PLANNER_SYSTEM,
       user,
       runId: trace.runId,
+      trace,
     });
     trace.addLlm("PlannerAgent.PlannerLLM", { system_prompt: PLANNER_SYSTEM, user_prompt: user }, value);
-    roadmap = value.roadmap ?? [];
+    roadmap = sanitizeRoadmap(value.roadmap ?? [], concepts);
     triageNote = value.triage_note ?? undefined;
   }
 
@@ -120,6 +155,7 @@ export async function runPlannerAgent(
     system: EXECUTOR_SYSTEM,
     user: execUser,
     runId: trace.runId,
+    trace,
   });
   trace.addLlm("PlannerAgent.ExecutorLLM", { system_prompt: EXECUTOR_SYSTEM, user_prompt: execUser }, exec);
 

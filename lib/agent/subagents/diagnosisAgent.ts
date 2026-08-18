@@ -18,6 +18,7 @@ import { analyzeTranscript } from "../tools/transcriptAnalyzer";
 import { applyEvidence } from "../tools/masteryUpdater";
 import { diagnoseGaps } from "../tools/gapDiagnoser";
 import { generateProbes } from "../tools/probeGenerator";
+import { saveSession } from "../state";
 import { curriculumSearch, SearchNamespace } from "../tools/curriculumSearch";
 import { decayedMastery } from "../tools/masteryUpdater";
 
@@ -26,7 +27,7 @@ tutoring agent — persona: a veteran 5-unit tutor who root-causes errors instea
 You work in a ReAct loop (Thought → Action → Observation). Reason step by step (chain of thought) in
 "thought", then pick ONE action:
 - {"action": "diagnose_gaps", "args": {"concept_ids": ["..."]}} — traverse the prerequisite graph below the listed weak concepts to find root causes
-- {"action": "search_curriculum", "args": {"namespace": "syllabus|exams|notes", "query": "..."}} — retrieve from the real Ministry corpus (syllabus text, past bagrut items) or this student's session notes
+- {"action": "search_curriculum", "args": {"namespace": "syllabus|exams", "query": "..."}} — retrieve real Ministry curriculum text (syllabus) or real past bagrut items (exams); the returned passages are quoted back to you, so ground your diagnosis in them
 - {"action": "generate_probes", "args": {"targets": [{"concept_id": "...", "reason": "..."}]}} — ONLY when the evidence is too thin/ambiguous to tell competing explanations apart; produces opening questions for the next session
 - {"action": "finish", "args": {"statement": "..."}} — one-paragraph diagnosis: WHAT is weak, WHY (root cause vs symptom), and how confident you are
 
@@ -34,6 +35,23 @@ Rules: never repeat an action with identical args; if evidence already pins the 
 without probes; if two explanations compete (e.g. dot-product formula vs trig signs underneath),
 diagnose_gaps first, then decide whether probes are needed.
 Reply in strict JSON: {"thought": "...", "action": "...", "args": {...}}`;
+
+/** Curated fallback for when the vector corpus returns nothing: quote the curated
+ *  concept catalog (the same descriptions seeded into Supabase) for the concepts this
+ *  session actually touched. /api/agent_info promises "curated fallbacks"; without this
+ *  the agent would simply lose all curriculum grounding on a miss. */
+function curatedFallback(
+  concepts: ConceptRow[],
+  analysis: TranscriptAnalysis,
+  result: DiagnosisResult,
+): string {
+  const ids = new Set<string>();
+  for (const e of analysis.evidence ?? []) ids.add(e.concept_id);
+  for (const w of result.diagnosis?.weak_concepts ?? []) ids.add(w.concept_id);
+  for (const r of result.diagnosis?.root_causes ?? []) ids.add(r.concept_id);
+  const rows = concepts.filter((c) => ids.has(c.id) && c.description).slice(0, 8);
+  return rows.map((c) => `  [curated:${c.id}] ${c.name_en} — ${c.description}`).join("\n");
+}
 
 export interface DiagnosisResult {
   analysis: TranscriptAnalysis;
@@ -57,6 +75,11 @@ export async function runDiagnosisAgent(
   if (analysis.incomplete && analysis.clarification_needed) {
     return { clarification: analysis.clarification_needed };
   }
+  // Persist the session BEFORE mutating mastery. applyEvidence commits durably, but the
+  // rest of the run (assessment, planning, reflection) can still throw — and the route
+  // then reports failure. Writing the audit trail first means a student's mastery is
+  // never silently changed with no session explaining it.
+  await saveSession(studentId, transcript, analysis.session_summary, analysis.evidence);
   const masteryChanges = await applyEvidence(trace, masteryRows, analysis.evidence, now);
 
   const result: DiagnosisResult = { analysis, masteryChanges };
@@ -74,6 +97,7 @@ export async function runDiagnosisAgent(
       system: REACT_SYSTEM,
       user: state,
       runId: trace.runId,
+      trace,
     });
     trace.addLlm("DiagnosisAgent", { system_prompt: REACT_SYSTEM, user_prompt: state }, value);
 
@@ -93,12 +117,33 @@ export async function runDiagnosisAgent(
         `diagnose_gaps(${ids.join(",")}) → weak: ${d.weak_concepts.map((w) => `${w.concept_id}@${w.mastery}`).join(", ") || "none"}; root causes: ${d.root_causes.map((r) => `${r.concept_id}(score ${r.score}, via ${r.via})`).join(", ") || "none"}`,
       );
     } else if (value.action === "search_curriculum") {
-      const ns = String(value.args?.namespace ?? "syllabus") as SearchNamespace;
+      const ns = (String(value.args?.namespace ?? "syllabus") === "exams"
+        ? "exams"
+        : "syllabus") as SearchNamespace;
       const q = String(value.args?.query ?? "");
-      const hits = await curriculumSearch(trace, ns, q, studentId);
-      observations.push(
-        `search_curriculum(${ns}, "${q.slice(0, 60)}") → ${hits.length ? hits.map((h) => `${h.source}@${h.score}`).join(", ") : "no hits (corpus fallback: curated descriptions)"}`,
-      );
+      const { hits, failed } = await curriculumSearch(trace, ns, q);
+      const label = `search_curriculum(${ns}, "${q.slice(0, 60)}")`;
+      if (failed) {
+        // An outage must not read as "the curriculum says nothing about this".
+        observations.push(
+          `${label} → RETRIEVAL ERROR: the corpus is unavailable. Do not treat this as ` +
+            `evidence of absence; reason from the session evidence and the concept catalog.`,
+        );
+      } else if (hits.length) {
+        // The passages themselves — this is what makes the step Agentic RAG rather
+        // than a similarity score the model cannot learn anything from.
+        observations.push(
+          `${label} → ${hits.length} passage(s):\n` +
+            hits.map((h) => `  [${h.source} @${h.score}] ${h.excerpt}`).join("\n"),
+        );
+      } else {
+        const curated = curatedFallback(concepts, analysis, result);
+        observations.push(
+          curated
+            ? `${label} → no corpus match. Curated curriculum fallback:\n${curated}`
+            : `${label} → no corpus match, and no curated description covers these concepts.`,
+        );
+      }
     } else if (value.action === "generate_probes") {
       const targets = (value.args?.targets as { concept_id: string; reason: string }[]) ?? [];
       result.probes = await generateProbes(trace, targets, concepts, language);

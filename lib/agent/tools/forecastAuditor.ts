@@ -37,6 +37,7 @@ export async function auditForecast(
     system: SYSTEM,
     user,
     runId: trace.runId,
+    trace,
   });
   trace.addLlm(
     "AssessmentAgent.ForecastAuditor",
