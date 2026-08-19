@@ -24,10 +24,10 @@ export interface ChatArgs {
   /** Passing the trace lets chatJSON record billed JSON-repair retries, which would
    *  otherwise be invisible to both steps[] and the per-run budget guard. */
   trace?: Trace;
-  /** Reasoning budget. Routing/classification modules pick a label from a fixed menu and
-   *  gain nothing from deliberation; measured on this deployment, "low" spends ~15
-   *  reasoning tokens against ~80 at the default and returns ~0.4s sooner per call.
-   *  Content modules keep the default. "minimal"/"none" are rejected by this deployment. */
+  /** Reasoning budget. Left unset everywhere on purpose: measured on this deployment with
+   *  the real SupervisorAgent prompt (n=5), the default already spends ~0 reasoning tokens
+   *  on these structured tasks, and forcing "low" was no faster (1.63s vs 1.60s) while
+   *  emitting 76% more completion tokens. Kept as a knob, not used. */
   effort?: "low" | "medium" | "high";
   /** Upper bound on completion tokens (reasoning tokens count toward it, so keep headroom
    *  — a truncated reply costs a full repair retry, which is worse than a long one). */

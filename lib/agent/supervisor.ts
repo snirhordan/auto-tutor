@@ -127,7 +127,6 @@ async function dispatchLoop(
       user: state,
       runId: trace.runId,
       trace,
-      effort: "low",
       maxTokens: 1200,
     });
     trace.addLlm("SupervisorAgent", { system_prompt: SYSTEM, user_prompt: state }, value);
