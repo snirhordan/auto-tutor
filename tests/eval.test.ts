@@ -69,7 +69,14 @@ d("AutoTutor eval — autonomy behaviors", () => {
     expect(m).toContain("SupervisorAgent");
     expect(m).toContain("DiagnosisAgent.TranscriptAnalyzer");
     expect(m).toContain("DiagnosisAgent.MasteryUpdater");
+    expect(m).toContain("DiagnosisAgent.GapDiagnoser");
     expect(m).toContain("AssessmentAgent.ExamForecaster");
+    expect(itai1.response).toMatch(/## (Pace & forecast|קצב ותחזית)/);
+    const masterySection = itai1.response?.match(
+      /## Mastery updates\n([\s\S]*?)(?=\n\n##|$)/,
+    )?.[1];
+    const reportedConcepts = masterySection?.match(/`[^`]+`/g) ?? [];
+    expect(new Set(reportedConcepts).size).toBe(reportedConcepts.length);
     expect(llmCalls(itai1)).toBeLessThanOrEqual(20);
   });
 

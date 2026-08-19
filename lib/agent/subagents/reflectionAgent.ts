@@ -6,14 +6,27 @@
 import { chatJSON } from "../../llm";
 import type { Trace } from "../types";
 
-const SYSTEM = `You are ReflectionAgent, the quality gate of an autonomous bagrut-math tutoring agent.
+const CHECKS = `You are ReflectionAgent, the quality gate of an autonomous bagrut-math tutoring agent.
 Score the draft response 1-10 against these checks:
 1. Does it address the diagnosed root cause (not just the surface errors)?
 2. Are difficulty and scope calibrated to the student's mastery and the sessions left?
 3. Are all numbers consistent (forecast, lessons, dates)?
 4. Is the tone right for a professional tutor-facing brief — direct, concrete, no filler?
 A response that fully satisfies all four checks scores 8-10; pass iff score >= 8.
-If pass, return {"score": <8-10>, "pass": true, "issues": [], "revised": null}.
+If pass, return {"score": <8-10>, "pass": true, "issues": [], "revised": null}.`;
+
+// Earlier rounds: a failing verdict is fixed by re-dispatching a specialist and
+// recomposing, so a rewrite produced here is thrown away unread. Asking for one on every
+// round made this the most expensive module in the project by output tokens (~700/call
+// against SupervisorAgent's ~73) — and output tokens are the slow side of a request.
+const SYSTEM = `${CHECKS}
+If not, return {"score": <1-7>, "pass": false, "issues": ["..."], "revised": null} — list what is
+wrong, concretely enough that another module can fix it. Do NOT rewrite the response.
+Reply in strict JSON: {"score": <1-10>, "pass": <true iff score >= 8>, "issues": ["..."], "revised": null}.`;
+
+// Last attempt: no fix round remains, so the reflector's own rewrite is the only
+// correction that can still ship.
+const FINAL_SYSTEM = `${CHECKS}
 If not, return {"score": <1-7>, "pass": false, "issues": ["..."], "revised": "the corrected full response"} —
 change ONLY what the issues require, keep the structure.
 Reply in strict JSON: {"score": <1-10>, "pass": <true iff score >= 8>, "issues": ["..."], "revised": "... or null"}.`;
@@ -32,6 +45,9 @@ export async function runReflectionAgent(
   trace: Trace,
   draft: string,
   contextSummary: string,
+  /** True on the last attempt, when there is no fix round left to act on `issues` and the
+   *  reflector's own rewrite is the only correction that can still ship. */
+  isFinalAttempt = false,
 ): Promise<ReflectionVerdict> {
   if (!trace.hasBudget(1)) {
     // Budget guard: we still have to ship something, but a gate that never ran must not
@@ -50,9 +66,10 @@ export async function runReflectionAgent(
     };
   }
   const user = `CONTEXT:\n${contextSummary}\n\nDRAFT RESPONSE:\n${draft}`;
+  const system = isFinalAttempt ? FINAL_SYSTEM : SYSTEM;
   const { value } = await chatJSON<ReflectionVerdict>({
     module: "ReflectionAgent",
-    system: SYSTEM,
+    system,
     user,
     runId: trace.runId,
     trace,
@@ -65,7 +82,7 @@ export async function runReflectionAgent(
   };
   trace.addLlm(
     "ReflectionAgent",
-    { system_prompt: SYSTEM, user_prompt: truncate(user, 4000) },
+    { system_prompt: system, user_prompt: truncate(user, 4000) },
     { score: verdict.score, pass: verdict.pass, issues: verdict.issues },
   );
   return verdict;

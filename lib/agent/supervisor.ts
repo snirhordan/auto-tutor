@@ -34,7 +34,8 @@ on_track without an AssessmentAgent result. Do not dispatch an agent twice.
 If you see a REFLECTION FEEDBACK section, the quality gate rejected the previous draft: dispatch
 whichever specialist(s) can actually fix the listed issues, then finalize — do not just re-finalize
 without addressing them.
-Reply in strict JSON: {"thought": "...", "dispatch": "..."}`;
+Keep "thought" to one short sentence (maximum 25 words); long reasoning is unnecessary and risks
+truncating the JSON object. Reply in strict JSON: {"thought": "...", "dispatch": "..."}`;
 
 /** Recompute pace + forecast (and self-audit when a prior forecast exists) and fold the
  *  result into artifacts. Exported so run.ts can guarantee that a transcript event always
@@ -126,6 +127,8 @@ async function dispatchLoop(
       user: state,
       runId: trace.runId,
       trace,
+      effort: "low",
+      maxTokens: 1200,
     });
     trace.addLlm("SupervisorAgent", { system_prompt: SYSTEM, user_prompt: state }, value);
 
@@ -146,6 +149,16 @@ async function dispatchLoop(
       artifacts.masteryChanges = r.masteryChanges;
       artifacts.diagnosis = r.diagnosis;
       artifacts.probes = r.probes;
+
+      // On a transcript event the assessment is mandatory (pace + forecast are required
+      // output) and both are pure code, so asking the Supervisor "what next?" here is a
+      // serial LLM round trip spent re-deriving a fixed answer. Run it inline and save
+      // the call. The genuine choice — plan, or finalize — still goes through the
+      // Supervisor on the next iteration.
+      if (!dispatched.has("AssessmentAgent")) {
+        dispatched.add("AssessmentAgent");
+        await runAssessment(trace, deps, artifacts);
+      }
     } else if (d === "AssessmentAgent") {
       await runAssessment(trace, deps, artifacts);
     } else if (d === "PlannerAgent") {

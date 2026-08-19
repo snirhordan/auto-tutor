@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run tests/contract.test.ts",
+    "test": "vitest run tests/contract.test.ts tests/agent-regressions.test.ts",
     "eval": "RUN_EVAL=1 vitest run tests/eval.test.ts",
     "seed": "tsx scripts/seed.ts",
     "ingest": "tsx scripts/ingest.ts",

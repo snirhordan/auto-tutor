@@ -145,7 +145,16 @@ export async function executeAgent(prompt: string): Promise<ExecuteResult> {
 
   let final: string;
   for (let round = 0; ; round++) {
-    const verdict = await runReflectionAgent(trace, draft, contextSummary(artifacts));
+    // On the last attempt there is no fix round left to act on `issues`, so the reflector
+    // must return a usable rewrite. Before that, asking for one only buys tokens we throw
+    // away — see FINAL_SYSTEM in reflectionAgent.
+    const isFinalAttempt = round >= MAX_REFLECTION_FIX_ROUNDS || !trace.hasBudget(4);
+    const verdict = await runReflectionAgent(
+      trace,
+      draft,
+      contextSummary(artifacts),
+      isFinalAttempt,
+    );
     if (verdict.pass) {
       final = draft;
       break;
@@ -195,6 +204,20 @@ export async function executeAgent(prompt: string): Promise<ExecuteResult> {
       { reattached: true },
     );
   }
+  // Reflection is probabilistic and may return a polished but incomplete rewrite.
+  // The final response must remain a faithful view of every artifact the run
+  // produced, especially the required pace/forecast for transcript events.
+  if (routed.intent === "transcript") {
+    const ensured = ensureTranscriptResponseSections(final, artifacts);
+    if (ensured !== final) {
+      final = ensured;
+      trace.addCode(
+        "ResponseComposer",
+        "restore artifact-backed sections removed by a reflection rewrite",
+        { restored: true },
+      );
+    }
+  }
   return { response: final, steps: trace.steps };
 }
 
@@ -216,59 +239,144 @@ function onboardSection(a: RunArtifacts): string {
         `You can correct the exam date or target grade just by replying.`;
 }
 
-function compose(a: RunArtifacts): string {
-  if (a.queryAnswer) return a.queryAnswer;
-  const s: string[] = [];
+export interface AggregatedMasteryChange {
+  concept_id: string;
+  from: number;
+  to: number;
+  observations: number;
+}
+
+/** Collapse sequential evidence updates into the net change a tutor needs to see. */
+export function aggregateMasteryChanges(
+  changes: NonNullable<RunArtifacts["masteryChanges"]>,
+): AggregatedMasteryChange[] {
+  const aggregated = new Map<string, AggregatedMasteryChange>();
+  for (const change of changes) {
+    const current = aggregated.get(change.concept_id);
+    if (current) {
+      current.to = change.to;
+      current.observations += 1;
+    } else {
+      aggregated.set(change.concept_id, { ...change, observations: 1 });
+    }
+  }
+  return [...aggregated.values()];
+}
+
+interface ResponseSection {
+  heading: string;
+  body: string;
+}
+
+function artifactSections(a: RunArtifacts): ResponseSection[] {
+  const sections: ResponseSection[] = [];
   const he = a.language === "he";
 
   if (a.onboarded) {
-    s.push(onboardSection(a));
+    sections.push({
+      heading: he ? "תלמיד/ה חדש/ה נוסף/ה למערכת" : "New student onboarded",
+      body: onboardSection(a),
+    });
   }
   if (a.analysis) {
-    s.push(`## ${he ? "סיכום המפגש" : "Session summary"}\n${a.analysis.session_summary}`);
+    const heading = he ? "סיכום המפגש" : "Session summary";
+    sections.push({ heading, body: `## ${heading}\n${a.analysis.session_summary}` });
   }
   if (a.masteryChanges?.length) {
-    s.push(
-      `## ${he ? "עדכוני שליטה" : "Mastery updates"}\n` +
-        a.masteryChanges.map((c) => `- \`${c.concept_id}\`: ${c.from} → **${c.to}**`).join("\n"),
-    );
+    const heading = he ? "עדכוני שליטה" : "Mastery updates";
+    const changes = aggregateMasteryChanges(a.masteryChanges);
+    sections.push({
+      heading,
+      body:
+        `## ${heading}\n` +
+        changes
+          .map((change) => {
+            const count =
+              change.observations > 1
+                ? ` (${change.observations} ${he ? "תצפיות" : "observations"})`
+                : "";
+            return `- \`${change.concept_id}\`: ${change.from} → **${change.to}**${count}`;
+          })
+          .join("\n"),
+    });
   }
   if (a.diagnosis?.statement) {
-    let d = `## ${he ? "אבחון" : "Diagnosis"}\n${a.diagnosis.statement}`;
+    const heading = he ? "אבחון" : "Diagnosis";
+    let body = `## ${heading}\n${a.diagnosis.statement}`;
     if (a.diagnosis.root_causes.length) {
-      d += `\n\n${he ? "גורמי שורש" : "Root causes"}: ` +
-        a.diagnosis.root_causes.map((r) => `\`${r.concept_id}\` (via \`${r.via}\`, score ${r.score})`).join(", ");
+      body +=
+        `\n\n${he ? "גורמי שורש" : "Root causes"}: ` +
+        a.diagnosis.root_causes
+          .map((r) => `\`${r.concept_id}\` (via \`${r.via}\`, score ${r.score})`)
+          .join(", ");
     }
-    s.push(d);
+    sections.push({ heading, body });
   }
   if (a.probes?.length) {
-    s.push(
-      `## ${he ? "שאלות אבחון לפתיחת המפגש הבא" : "Diagnostic probes for next session"}\n` +
-        a.probes.map((p, i) => `${i + 1}. ${p.question}\n   - ${he ? "תשובה צפויה" : "expect"}: ${p.expected_answer}\n   - ${he ? "מבחין" : "distinguishes"}: ${p.distinguishes}`).join("\n"),
-    );
+    const heading = he ? "שאלות אבחון לפתיחת המפגש הבא" : "Diagnostic probes for next session";
+    sections.push({
+      heading,
+      body:
+        `## ${heading}\n` +
+        a.probes
+          .map(
+            (p, i) =>
+              `${i + 1}. ${p.question}\n   - ${he ? "תשובה צפויה" : "expect"}: ${p.expected_answer}\n   - ${he ? "מבחין" : "distinguishes"}: ${p.distinguishes}`,
+          )
+          .join("\n"),
+    });
   }
   if (a.pace && a.forecast) {
-    let f =
-      `## ${he ? "קצב ותחזית" : "Pace & forecast"}\n` +
+    const heading = he ? "קצב ותחזית" : "Pace & forecast";
+    let body =
+      `## ${heading}\n` +
       `- ${he ? "ימים לבחינה" : "Days to exam"}: **${a.pace.days_to_exam}** (~${a.pace.sessions_left} ${he ? "מפגשים" : "sessions"})\n` +
-      `- ${he ? "שליטה משוקללת" : "Weighted mastery"}: **${a.pace.weighted_mastery}** vs ${he ? "צפוי" : "expected"} ${a.pace.expected_mastery_by_now} → ${a.pace.on_track ? (he ? "בקצב" : "on track") : (he ? "**בפיגור**" : "**behind**")}\n` +
+      `- ${he ? "שליטה משוקללת" : "Weighted mastery"}: **${a.pace.weighted_mastery}** vs ${he ? "צפוי" : "expected"} ${a.pace.expected_mastery_by_now} → ${a.pace.on_track ? (he ? "בקצב" : "on track") : he ? "**בפיגור**" : "**behind**"}\n` +
       `- ${he ? "תחזית ציון" : "Grade forecast"}: **${a.forecast.predicted_grade}** [${a.forecast.interval_low}–${a.forecast.interval_high}] · ${he ? "שיעורים נדרשים ליעד" : "lessons needed to target"}: **${a.forecast.lessons_needed}**`;
     if (a.audit) {
-      f += `\n- ${he ? "ביקורת עצמית על התחזית הקודמת" : "Self-audit of prior forecast"} (**${a.audit.verdict}**): ${a.audit.critique}\n- ${he ? "התאמה" : "Adjustment"}: ${a.audit.adjustment}`;
+      body += `\n- ${he ? "ביקורת עצמית על התחזית הקודמת" : "Self-audit of prior forecast"} (**${a.audit.verdict}**): ${a.audit.critique}\n- ${he ? "התאמה" : "Adjustment"}: ${a.audit.adjustment}`;
     }
-    s.push(f);
+    sections.push({ heading, body });
   }
   if (a.roadmap?.length) {
-    let r =
-      `## ${he ? 'מפת דרך' : "Roadmap"}\n` +
-      a.roadmap.map((l) => `${l.lesson}. [${l.focus_concepts.map((c) => `\`${c}\``).join(", ")}] — ${l.goal}`).join("\n");
-    if (a.replanRationale) r += `\n\n> ${he ? "שינוי תכנית" : "Replan/triage"}: ${a.replanRationale}`;
-    s.push(r);
+    const heading = he ? "מפת דרך" : "Roadmap";
+    let body =
+      `## ${heading}\n` +
+      a.roadmap
+        .map(
+          (lesson) =>
+            `${lesson.lesson}. [${lesson.focus_concepts.map((c) => `\`${c}\``).join(", ")}] — ${lesson.goal}`,
+        )
+        .join("\n");
+    if (a.replanRationale) {
+      body += `\n\n> ${he ? "שינוי תכנית" : "Replan/triage"}: ${a.replanRationale}`;
+    }
+    sections.push({ heading, body });
   }
   if (a.brief) {
-    s.push(`## ${he ? "תדריך למפגש הבא" : "Next-session brief"}\n${a.brief}`);
+    const heading = he ? "תדריך למפגש הבא" : "Next-session brief";
+    sections.push({ heading, body: `## ${heading}\n${a.brief}` });
   }
-  return s.join("\n\n") || (he ? "לא נדרשה פעולה." : "No action was required for this event.");
+  return sections;
+}
+
+/** Restore complete deterministic sections if an LLM rewrite dropped them. */
+export function ensureTranscriptResponseSections(response: string, a: RunArtifacts): string {
+  const missing = artifactSections(a).filter(
+    (section) => !response.includes(`## ${section.heading}`),
+  );
+  return missing.length
+    ? [response.trim(), ...missing.map((section) => section.body)].filter(Boolean).join("\n\n")
+    : response;
+}
+
+export function compose(a: RunArtifacts): string {
+  if (a.queryAnswer) return a.queryAnswer;
+  const sections = artifactSections(a);
+  return (
+    sections.map((section) => section.body).join("\n\n") ||
+    (a.language === "he" ? "לא נדרשה פעולה." : "No action was required for this event.")
+  );
 }
 
 function contextSummary(a: RunArtifacts): string {

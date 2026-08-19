@@ -35,6 +35,8 @@ export async function routeIntent(trace: Trace, prompt: string): Promise<RoutedI
     user,
     runId: trace.runId,
     trace,
+    effort: "low",
+    maxTokens: 1200,
   });
   trace.addLlm(
     "IntentRouter",

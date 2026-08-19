@@ -84,6 +84,34 @@ export interface DiagnosisResult {
   probes?: Probe[];
 }
 
+/**
+ * Deterministic safety net for the ReAct diagnostician.
+ *
+ * The model is still free to traverse other prerequisite branches later, but it
+ * must not be able to finish before the concepts with non-correct evidence have
+ * been checked against the numeric mastery threshold. This is zero-chat-cost
+ * graph work and keeps the Supervisor's "clean session" decision grounded in
+ * the mastery values that were just persisted.
+ */
+export function diagnoseTouchedGaps(
+  trace: Trace,
+  evidence: EvidenceEvent[],
+  masteryRows: MasteryRow[],
+  edges: { src: string; dst: string; strength: number }[],
+  now: Date,
+): GapDiagnosis | undefined {
+  const focusConcepts = [
+    ...new Set(
+      evidence
+        .filter((event) => event.outcome !== "correct")
+        .map((event) => event.concept_id),
+    ),
+  ];
+  return focusConcepts.length
+    ? diagnoseGaps(trace, focusConcepts, masteryRows, edges, now)
+    : undefined;
+}
+
 export async function runDiagnosisAgent(
   trace: Trace,
   transcript: string,
@@ -109,6 +137,27 @@ export async function runDiagnosisAgent(
   const result: DiagnosisResult = { analysis, masteryChanges };
   const observations: string[] = [];
   const seen = new Set<string>();
+
+  // Establish the numeric gap baseline before asking the LLM to interpret it.
+  // Previously the model could jump straight to `finish`, which created an
+  // empty weak_concepts array even when a just-updated mastery was below 0.6.
+  const baselineDiagnosis = diagnoseTouchedGaps(
+    trace,
+    analysis.evidence,
+    masteryRows,
+    edges,
+    now,
+  );
+  if (baselineDiagnosis) {
+    result.diagnosis = baselineDiagnosis;
+    observations.push(
+      `baseline diagnose_gaps → weak: ${baselineDiagnosis.weak_concepts
+        .map((w) => `${w.concept_id}@${w.mastery}`)
+        .join(", ") || "none"}; root causes: ${baselineDiagnosis.root_causes
+        .map((r) => `${r.concept_id}(score ${r.score}, via ${r.via})`)
+        .join(", ") || "none"}`,
+    );
+  }
 
   // Seed the ReAct loop with real Ministry curriculum text for whatever the student got
   // wrong. Retrieval is a single embedding call — no chat tokens, so it costs nothing

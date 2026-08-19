@@ -24,6 +24,14 @@ export interface ChatArgs {
   /** Passing the trace lets chatJSON record billed JSON-repair retries, which would
    *  otherwise be invisible to both steps[] and the per-run budget guard. */
   trace?: Trace;
+  /** Reasoning budget. Routing/classification modules pick a label from a fixed menu and
+   *  gain nothing from deliberation; measured on this deployment, "low" spends ~15
+   *  reasoning tokens against ~80 at the default and returns ~0.4s sooner per call.
+   *  Content modules keep the default. "minimal"/"none" are rejected by this deployment. */
+  effort?: "low" | "medium" | "high";
+  /** Upper bound on completion tokens (reasoning tokens count toward it, so keep headroom
+   *  — a truncated reply costs a full repair retry, which is worse than a long one). */
+  maxTokens?: number;
 }
 
 export interface ChatResult {
@@ -33,7 +41,7 @@ export interface ChatResult {
 }
 
 /** One chat completion. Every call is usage-logged under its module name. */
-export async function chat({ module, system, user, runId, json }: ChatArgs): Promise<ChatResult> {
+export async function chat({ module, system, user, runId, json, effort, maxTokens }: ChatArgs): Promise<ChatResult> {
   const res = await openai.chat.completions.create({
     model: CHAT_MODEL,
     messages: [
@@ -44,6 +52,8 @@ export async function chat({ module, system, user, runId, json }: ChatArgs): Pro
     // cheaper than paying for a full-prompt repair retry (verified supported on the
     // course's Azure deployment).
     ...(json ? { response_format: { type: "json_object" as const } } : {}),
+    ...(effort ? { reasoning_effort: effort } : {}),
+    ...(maxTokens ? { max_completion_tokens: maxTokens } : {}),
   });
   const usage = res.usage;
   await logUsage({
@@ -63,7 +73,7 @@ export async function chat({ module, system, user, runId, json }: ChatArgs): Pro
 export async function chatJSON<T>(args: ChatArgs): Promise<{ value: T; raw: ChatResult }> {
   const sys = args.system + "\nReturn ONLY a valid JSON object. No prose, no markdown fences.";
   let raw = await chat({ ...args, system: sys, json: true });
-  let parsed = tryParse<T>(raw.text);
+  let parsed = parseFirstJSONObject<T>(raw.text);
   for (let attempt = 0; parsed === undefined && attempt < 2; attempt++) {
     // The unusable reply was still billed. Record it so steps[] describes every LLM
     // call (as the spec requires) and the budget guard sees the real spend.
@@ -74,7 +84,7 @@ export async function chatJSON<T>(args: ChatArgs): Promise<{ value: T; raw: Chat
       json: true,
       user: args.user + "\n\nYour previous reply was not valid JSON. Reply with the JSON object only.",
     });
-    parsed = tryParse<T>(raw.text);
+    parsed = parseFirstJSONObject<T>(raw.text);
   }
   if (parsed === undefined) {
     throw new Error(`Module ${args.module} did not return valid JSON`);
@@ -82,16 +92,53 @@ export async function chatJSON<T>(args: ChatArgs): Promise<{ value: T; raw: Chat
   return { value: parsed, raw };
 }
 
-function tryParse<T>(text: string): T | undefined {
-  // Tolerate accidental code fences or leading prose around the JSON object.
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  if (start === -1 || end <= start) return undefined;
-  try {
-    return JSON.parse(text.slice(start, end + 1)) as T;
-  } catch {
-    return undefined;
+/**
+ * Parse the first complete JSON object in a model reply.
+ *
+ * Besides fences/leading prose, some compatible providers occasionally repeat
+ * the same valid object twice. Taking text from the first `{` to the last `}`
+ * turns that otherwise usable response into invalid JSON and needlessly bills a
+ * repair call. A small string-aware brace scanner accepts the first complete
+ * object while still rejecting truncated JSON.
+ */
+export function parseFirstJSONObject<T>(text: string): T | undefined {
+  let searchFrom = 0;
+  while (searchFrom < text.length) {
+    const start = text.indexOf("{", searchFrom);
+    if (start === -1) return undefined;
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+    let closedAt = -1;
+
+    for (let i = start; i < text.length; i++) {
+      const char = text[i];
+      if (inString) {
+        if (escaped) escaped = false;
+        else if (char === "\\") escaped = true;
+        else if (char === '"') inString = false;
+        continue;
+      }
+      if (char === '"') inString = true;
+      else if (char === "{") depth += 1;
+      else if (char === "}") {
+        depth -= 1;
+        if (depth === 0) {
+          closedAt = i;
+          try {
+            return JSON.parse(text.slice(start, i + 1)) as T;
+          } catch {
+            break;
+          }
+        }
+      }
+    }
+    // If the outer object never closed, do not accidentally accept one of its
+    // nested objects as the whole reply. A repair call is the safe outcome.
+    if (closedAt === -1) return undefined;
+    searchFrom = closedAt + 1;
   }
+  return undefined;
 }
 
 /** Batched embeddings (L4: batch to amortize cost/latency). */
