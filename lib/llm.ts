@@ -1,17 +1,19 @@
 // OpenAI-compatible client against the LLMod.ai course endpoint,
 // with per-call token-usage logging (Supabase llm_usage) and strict-JSON helpers.
 import OpenAI from "openai";
-import { CHAT_MODEL, EMBEDDING_MODEL } from "./config";
+import { CHAT_MODEL, EMBEDDING_MODEL, LLM_MAX_RETRIES, LLM_TIMEOUT_MS } from "./config";
 import { logUsage } from "./supabase";
 import type { Trace } from "./agent/types";
 
 export const openai = new OpenAI({
   apiKey: process.env.LLMOD_API_KEY,
   baseURL: process.env.LLMOD_BASE_URL,
-  // LLMod occasionally returns transient 429/5xx on long agent runs; the SDK
-  // retries those with exponential backoff — default of 2 is not enough.
-  maxRetries: 5,
-  timeout: 120_000,
+  // LLMod occasionally returns transient 429/5xx on long agent runs, so keep retries —
+  // but bound them. At the previous 5 retries x 120s a SINGLE call could run 720s, more
+  // than twice Vercel's 300s hard kill, so one stalled provider took the whole request
+  // down with no response at all. 30s x (1+3) = 120s worst case per call.
+  maxRetries: LLM_MAX_RETRIES,
+  timeout: LLM_TIMEOUT_MS,
 });
 
 export interface ChatArgs {

@@ -1,3 +1,5 @@
+import { RUN_DEADLINE_MS } from "../config";
+
 // Core types for the AutoTutor agent. Module names in Step.module must match
 // the architecture diagram (scripts/diagram.py) exactly — the spec requires it.
 
@@ -18,7 +20,18 @@ export interface Step {
 export class Trace {
   steps: Step[] = [];
   llmCalls = 0;
-  constructor(public runId: string, private maxLlmCalls: number) {}
+  readonly startedAt = Date.now();
+  /** Set once the wall-clock guard actually stops work, so the reply can say so. */
+  deadlineHit = false;
+  constructor(
+    public runId: string,
+    private maxLlmCalls: number,
+    private deadlineMs: number = RUN_DEADLINE_MS,
+  ) {}
+
+  elapsedMs(): number {
+    return Date.now() - this.startedAt;
+  }
 
   addLlm(module: string, prompt: StepPrompt, response: unknown): void {
     this.llmCalls += 1;
@@ -62,8 +75,13 @@ export class Trace {
     });
   }
 
-  /** True while we still have LLM budget beyond a reserve. */
+  /** True while we still have LLM budget beyond a reserve AND wall-clock room to use it.
+   *  Every specialist already gates on this, so the deadline propagates for free. */
   hasBudget(reserve = 0): boolean {
+    if (this.elapsedMs() >= this.deadlineMs) {
+      this.deadlineHit = true;
+      return false;
+    }
     return this.llmCalls < this.maxLlmCalls - reserve;
   }
 }

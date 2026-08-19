@@ -193,6 +193,19 @@ export async function executeAgent(prompt: string): Promise<ExecuteResult> {
       break;
     }
   }
+  // If the wall-clock guardrail stopped work, say so. A short answer because the run ran
+  // out of time must not look like a short answer because the session was clean.
+  if (trace.deadlineHit) {
+    final +=
+      "\n\n---\n_Note: this run hit its time guardrail, so some steps were skipped to return " +
+      "within the request limit. Re-run for the full analysis._";
+    trace.addCode(
+      "ResponseComposer",
+      "wall-clock guardrail reached — shipping best-effort within the request limit",
+      { deadline_hit: true, elapsed_ms: trace.elapsedMs(), llm_calls: trace.llmCalls },
+    );
+  }
+
   // Deterministic guarantee: the onboarding-assumptions disclosure survives any
   // LLM rewrite. If a reflection revision stripped it, re-attach it up front —
   // the tutor must always see what the agent assumed about a brand-new profile.

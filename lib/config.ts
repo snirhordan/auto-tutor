@@ -26,6 +26,17 @@ export const nsNotes = (studentId: string) => `notes-${studentId}`;
 // ---- Efficiency guardrails (Project Requirement 1) ----
 // Hard cap on LLM calls per /api/execute run.
 export const MAX_LLM_CALLS_PER_RUN = 20;
+
+// ---- Wall-clock guardrail (Vercel kills the function at 300s) ----
+// A call cap alone does not bound duration: if the provider stalls, N slow calls still
+// blow the limit and the tutor gets a killed function instead of an answer. Budget it:
+//   worst single call = LLM_TIMEOUT_MS x (1 + LLM_MAX_RETRIES) = 120s
+//   margin to compose, reflect and serialise the response        =  20s
+//   => stop starting new LLM work at 300 - 120 - 20 = 160s
+export const LLM_TIMEOUT_MS = 30_000;
+export const LLM_MAX_RETRIES = 3;
+/** No NEW llm work may start after this point in a run. */
+export const RUN_DEADLINE_MS = 160_000;
 // SupervisorAgent: max sub-agent dispatches per run.
 export const MAX_SUPERVISOR_DISPATCHES = 6;
 // DiagnosisAgent: max ReAct iterations.
